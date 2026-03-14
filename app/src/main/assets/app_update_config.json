@@ -1,0 +1,13 @@
+{
+  "latestVersionCode": 1,
+  "latestVersionName": "1.0",
+  "downloadUrl": "https://example.com/gieterp-release.apk",
+  "title": "Update available",
+  "message": "A newer version of GIET ERP is available with performance improvements, bug fixes, and a more reliable experience.",
+  "forceUpdate": false,
+  "changelog": [
+    "Professional UI refinements",
+    "Attendance and analytics improvements",
+    "Special directory search upgrades"
+  ]
+}

@@ -1,0 +1,217 @@
+package com.example.gieterp
+
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.android.volley.AuthFailureError
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import org.json.JSONObject
+
+class MainActivity2 : AppCompatActivity() {
+
+    private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
+
+    private lateinit var loadingOverlay: View
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var rollnoView: TextView
+    private lateinit var logoutButton: Button
+    private lateinit var getAttendance: ImageButton
+    private lateinit var getSemesterMark: ImageButton
+    private lateinit var attendancePercentText: TextView
+    private lateinit var bunkedClassText: TextView
+    private lateinit var semesterButton: ImageButton
+
+    private var lastAttendanceResponse: String? = null
+    private var activeRollNo: String? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main2)
+
+        findViewById<View>(R.id.main).applySystemBarsPadding()
+
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshDashboard)
+        rollnoView = findViewById(R.id.rollno)
+        logoutButton = findViewById(R.id.buttonLogout)
+        getAttendance = findViewById(R.id.getattendance)
+        getSemesterMark = findViewById(R.id.getsemestermarks)
+        attendancePercentText = findViewById(R.id.attendancePercentText)
+        bunkedClassText = findViewById(R.id.bunkedClassText)
+        semesterButton = findViewById(R.id.getSemester)
+
+        val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
+
+        if (rollNo.isNullOrBlank()) {
+            Toast.makeText(this, getString(R.string.roll_number_not_found_sign_in), Toast.LENGTH_LONG).show()
+            Log.e("MainActivity2", "Roll number not found in SharedPreferences")
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
+
+        rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
+        activeRollNo = rollNo
+        AppUpdateChecker.checkForUpdates(this)
+        setupSwipeToRefresh()
+        fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
+
+        logoutButton.setOnClickListener {
+            sharedPref.edit {
+                remove(AppSession.KEY_ROLL_NO)
+                remove(AppSession.KEY_STUDENT_ID)
+            }
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
+
+        getAttendance.setOnClickListener {
+            val response = lastAttendanceResponse
+            if (response.isNullOrEmpty()) {
+                Toast.makeText(this, getString(R.string.attendance_loading_wait), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            sendResponse(response)
+        }
+
+        getSemesterMark.setOnClickListener {
+            startActivity(Intent(this, SemesterMark::class.java))
+        }
+
+        semesterButton.setOnClickListener {
+            startActivity(Intent(this, Semester::class.java))
+        }
+    }
+
+    private fun setupSwipeToRefresh() {
+        swipeRefreshLayout.setColorSchemeResources(
+            R.color.accent_secondary,
+            R.color.accent_primary,
+        )
+        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.surface_card)
+        swipeRefreshLayout.setOnRefreshListener {
+            val rollNo = activeRollNo
+            if (rollNo.isNullOrBlank()) {
+                swipeRefreshLayout.isRefreshing = false
+                return@setOnRefreshListener
+            }
+            fetchAttendance(
+                rollNo = rollNo,
+                semester = StudentAnalytics.calculateCurrentSemester(rollNo),
+                fromSwipeRefresh = true,
+            )
+        }
+    }
+
+    private fun fetchAttendance(rollNo: String, semester: Int, fromSwipeRefresh: Boolean = false) {
+        val url = "https://gietuerp.in/AttendanceReport/GetAttendanceByRollNo"
+        if (fromSwipeRefresh) {
+            swipeRefreshLayout.isRefreshing = true
+        } else {
+            loadingOverlay.visibility = View.VISIBLE
+        }
+
+        val request = object : StringRequest(
+            Request.Method.POST,
+            url,
+            { response ->
+                finishLoadingState()
+                lastAttendanceResponse = response
+                parseAttendance(response)
+            },
+            { error ->
+                finishLoadingState()
+                val errorMessage = error.message ?: getString(R.string.error_unknown_network)
+                Toast.makeText(this, getString(R.string.error_network_format, errorMessage), Toast.LENGTH_LONG).show()
+                Log.e("AttendanceError", errorMessage, error)
+            },
+        ) {
+            override fun getParams() = mutableMapOf(
+                "vvchRollNo" to rollNo,
+                "vintSemester" to semester.toString(),
+                "vdtmStartDate" to "",
+                "vdtmEndDate" to "",
+            )
+
+            @Throws(AuthFailureError::class)
+            override fun getHeaders() = mutableMapOf(
+                "Content-Type" to "application/x-www-form-urlencoded",
+            )
+        }
+
+        requestQueue.add(request)
+    }
+
+    private fun finishLoadingState() {
+        loadingOverlay.visibility = View.GONE
+        swipeRefreshLayout.isRefreshing = false
+    }
+
+    private fun sendResponse(response: String) {
+        val intent = Intent(this, AttendanceActivity::class.java)
+        intent.putExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE, response)
+        startActivity(intent)
+    }
+
+    private fun parseAttendance(response: String) {
+        try {
+            val json = JSONObject(response)
+            val dataArray = json.optJSONArray("dataAttendance")
+
+            if (dataArray == null || dataArray.length() == 0) {
+                Toast.makeText(this, json.optString("message", getString(R.string.attendance_no_data)), Toast.LENGTH_LONG).show()
+                attendancePercentText.text = getString(R.string.value_unknown)
+                bunkedClassText.text = getString(R.string.value_unknown)
+                attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                return
+            }
+
+            val attendanceRecords = buildList<Pair<Double, Double>> {
+                for (index in 0 until dataArray.length()) {
+                    val obj = dataArray.getJSONObject(index)
+                    StudentAnalytics.extractAttendanceCount(
+                        totalValue = obj.optString("Total", ""),
+                        attendedValue = obj.optString("Attended", ""),
+                    )?.let(::add)
+                }
+            }
+
+            val summary = StudentAnalytics.summarizeAttendance(attendanceRecords)
+            if (summary == null) {
+                attendancePercentText.text = getString(R.string.value_unknown)
+                bunkedClassText.text = getString(R.string.status_no_data)
+                attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                return
+            }
+
+            attendancePercentText.text = summary.percentageLabel()
+            bunkedClassText.text = summary.statusLabel()
+            val indicatorColor = if (summary.isAtOrAboveThreshold) {
+                R.color.accent_positive
+            } else {
+                R.color.danger
+            }
+            attendancePercentText.setTextColor(ContextCompat.getColor(this, indicatorColor))
+            bunkedClassText.setTextColor(ContextCompat.getColor(this, indicatorColor))
+        } catch (e: Exception) {
+            val parseMessage = e.message ?: getString(R.string.status_no_data)
+            Toast.makeText(this, getString(R.string.error_parse_format, parseMessage), Toast.LENGTH_LONG).show()
+            Log.e("AttendanceParse", "Failed to parse attendance", e)
+        }
+    }
+}

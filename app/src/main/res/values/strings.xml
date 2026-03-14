@@ -1,0 +1,116 @@
+<resources>
+    <string name="app_name">GIET ERP</string>
+
+    <string name="giet_erp">GIET ERP</string>
+    <string name="welcome_subtitle">Student Information Dashboard</string>
+    <string name="enter_rollno">Enter Roll Number</string>
+    <string name="submit">Continue</string>
+    <string name="roll_no">Roll Number</string>
+    <string name="logout_back">Sign Out</string>
+    <string name="todo">App Logo</string>
+    <string name="update_metadata_url">asset://app_update_config.json</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_message">A newer version of GIET ERP is available with performance improvements, bug fixes, and a more reliable experience.</string>
+    <string name="update_version_summary">Current: %1$s | Latest: %2$s</string>
+    <string name="update_whats_new">What’s new</string>
+    <string name="update_action_now">Update now</string>
+    <string name="update_action_later">Later</string>
+    <string name="update_link_unavailable">The update link is not available right now.</string>
+
+    <string name="attendance_overview">Attendance Overview</string>
+    <string name="attendance_label">Attendance</string>
+    <string name="bunk_label">Status</string>
+    <string name="get_attendance">Attendance Report</string>
+    <string name="semester_marks">Internal Assessments</string>
+    <string name="semester_">Semester Results</string>
+    <string name="semester_number_format">Semester %1$d</string>
+    <string name="_0">0%</string>
+    <string name="bunked_0">Status: Pending</string>
+
+    <string name="attendance_report1">Attendance Report</string>
+    <string name="internal_exam_marks">Internal Assessment Marks</string>
+    <string name="semester_marks2">Semester Results</string>
+    <string name="semester_mark">Semester Result</string>
+    <string name="attendance_report">Attendance Report</string>
+    <string name="semester">Semester</string>
+    <string name="semester_marks1">Semester Marks</string>
+
+    <string name="exam_header_placeholder">Exam details appear here</string>
+
+    <string name="secret_password_title">Restricted Access</string>
+    <string name="secret_password_message">Enter password to open the special page.</string>
+    <string name="secret_password_hint">Password</string>
+    <string name="secret_password_invalid">Invalid password</string>
+
+    <string name="special_title">Special Page</string>
+    <string name="special_subtitle">Restricted Console</string>
+    <string name="special_description">Choose filters to open the student directory.</string>
+    <string name="special_close">Close</string>
+    <string name="special_search_hint">Search by Roll No or Name</string>
+    <string name="special_program_fixed">Program: BTech</string>
+    <string name="special_program_id_fixed">Program ID: 1</string>
+    <string name="special_branch_label">Branch</string>
+    <string name="special_semester_label">Semester</string>
+    <string name="special_select_semester">Select Semester</string>
+    <string name="special_semester_option">Semester %1$d</string>
+    <string name="special_open_results">Open Results</string>
+    <string name="special_results_title">Student Results</string>
+    <string name="special_results_branch">Branch: %1$s</string>
+    <string name="special_results_semester">Semester: %1$d</string>
+    <string name="special_back">Back</string>
+    <string name="special_roll_hint">Search by Roll No</string>
+    <string name="special_name_hint">Search by Student Name</string>
+    <string name="special_loading">Fetching student directory...</string>
+    <string name="special_form_hint">Program stays fixed to BTech with Program ID 1. Choose a branch and semester, then open the results screen to search by roll number or name.</string>
+    <string name="special_results_initial">0 students</string>
+    <string name="special_results_count">%1$d students</string>
+    <string name="special_no_data">No records found.</string>
+    <string name="special_data_load_failed">Failed to load student records.</string>
+    <string name="special_select_semester_error">Select a semester to continue.</string>
+    <string name="label_roll_no">Roll No: %1$s</string>
+    <string name="label_registration_no">Reg No: %1$s</string>
+    <string name="label_program_branch">Program: %1$s • Branch: %2$s</string>
+    <string name="label_sem_section">Semester: %1$d • Section: %2$s</string>
+    <string name="label_contact">Contact: %1$s</string>
+    <string name="label_hostel_info">Hostel: %1$s</string>
+
+    <string name="roll_number_not_found_sign_in">Roll number not found. Please sign in again.</string>
+    <string name="roll_number_not_found_local">Roll number not found in local storage.</string>
+    <string name="roll_number_missing">Roll number is missing.</string>
+    <string name="roll_no_display_format">Roll No: %1$s</string>
+
+    <string name="attendance_loading_wait">Please wait, attendance data not loaded yet.</string>
+    <string name="attendance_data_missing">Attendance data is missing.</string>
+    <string name="attendance_no_data">No attendance data found</string>
+    <string name="status_no_data">No data</string>
+    <string name="value_unknown">--</string>
+
+    <string name="error_network_format">Network error: %1$s</string>
+    <string name="error_parse_format">Parse error: %1$s</string>
+    <string name="error_unknown_network">Unknown network error</string>
+
+    <string name="failed_load_student_id">Failed to load student ID.</string>
+    <string name="failed_parse_student_details">Failed to parse student details.</string>
+    <string name="failed_parse_grades">Failed to parse grade data.</string>
+    <string name="failed_load_grades">Failed to load grades.</string>
+    <string name="no_grades_for_semester">No grades available for this semester.</string>
+
+    <string name="loading_semester_marks">Loading Semester %1$d Marks...</string>
+    <string name="loading_dashboard_data">Fetching attendance summary...</string>
+    <string name="loading_semester_data">Fetching semester records...</string>
+    <string name="exam_or_student_id_missing">Exam or Student ID missing!</string>
+    <string name="exam_marks_fallback_title">Exam Marks</string>
+
+    <string name="header_attendance_date">Attendance Date</string>
+    <string name="header_subject">Subject</string>
+    <string name="header_grade">Grade</string>
+    <string name="header_sgpa">SGPA</string>
+    <string name="header_exam_name">Exam Name</string>
+    <string name="header_subject_name">Subject Name</string>
+    <string name="header_total_marks">Total Marks</string>
+    <string name="header_marks_secured">Marks Secured</string>
+    <string name="header_subject_marks">Subject Marks</string>
+    <string name="view_marks">View Marks</string>
+
+    <string name="common_not_available">-</string>
+</resources>
