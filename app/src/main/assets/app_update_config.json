@@ -1,13 +1,13 @@
 {
-  "latestVersionCode": 1,
-  "latestVersionName": "1.0",
+  "latestVersionCode": 2,
+  "latestVersionName": "1.1",
   "downloadUrl": "https://example.com/gieterp-release.apk",
   "title": "Update available",
-  "message": "A newer version of GIET ERP is available with performance improvements, bug fixes, and a more reliable experience.",
+  "message": "Version 1.1 is available with the new GitHub-powered update flow and release reliability improvements.",
   "forceUpdate": false,
   "changelog": [
-    "Professional UI refinements",
-    "Attendance and analytics improvements",
-    "Special directory search upgrades"
+    "GitHub update delivery is now live",
+    "Release reliability improvements",
+    "Professional UI and directory enhancements"
   ]
 }
