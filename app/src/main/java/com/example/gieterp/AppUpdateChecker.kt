@@ -1,6 +1,7 @@
 package com.example.gieterp
 
 import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
@@ -133,13 +134,15 @@ object AppUpdateChecker {
 
     private fun openUpdateUrl(activity: AppCompatActivity, url: String): Boolean {
         val parsedUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
-        val intent = Intent(Intent.ACTION_VIEW, parsedUri)
-        val canResolve = intent.resolveActivity(activity.packageManager) != null
-        if (!canResolve) {
+        val intent = Intent(Intent.ACTION_VIEW, parsedUri).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+        return try {
+            activity.startActivity(intent)
+            true
+        } catch (_: ActivityNotFoundException) {
             return false
         }
-        activity.startActivity(intent)
-        return true
     }
 
     private fun getCurrentVersionCode(activity: AppCompatActivity): Long {
