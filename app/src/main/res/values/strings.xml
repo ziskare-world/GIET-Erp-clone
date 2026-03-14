@@ -8,7 +8,7 @@
     <string name="roll_no">Roll Number</string>
     <string name="logout_back">Sign Out</string>
     <string name="todo">App Logo</string>
-    <string name="update_metadata_url">asset://app_update_config.json</string>
+    <string name="update_metadata_url">https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/app-update.json</string>
     <string name="update_available_title">Update available</string>
     <string name="update_available_message">A newer version of GIET ERP is available with performance improvements, bug fixes, and a more reliable experience.</string>
     <string name="update_version_summary">Current: %1$s | Latest: %2$s</string>
