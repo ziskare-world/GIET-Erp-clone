@@ -1,9 +1,16 @@
 package com.example.gieterp
 
-import android.content.Intent
+import android.app.DownloadManager
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,9 +24,12 @@ import org.json.JSONObject
 object AppUpdateChecker {
     private const val UPDATE_PREF_KEY_DISMISSED_VERSION = "dismissedUpdateVersion"
     private const val ASSET_PREFIX = "asset://"
+    private const val UPDATE_APK_FILE_NAME = "gieterp-update.apk"
 
     private var isCheckInProgress = false
     private var activeDialog: AlertDialog? = null
+    private var activeDownloadId: Long = -1L
+    private var downloadReceiver: BroadcastReceiver? = null
 
     fun checkForUpdates(activity: AppCompatActivity) {
         if (isCheckInProgress || activeDialog?.isShowing == true) {
@@ -111,7 +121,7 @@ object AppUpdateChecker {
         activeDialog = dialog
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
-                if (openUpdateUrl(activity, updateInfo.downloadUrl)) {
+                if (startUpdateDownload(activity, updateInfo.downloadUrl)) {
                     dialog.dismiss()
                 } else {
                     Toast.makeText(activity, R.string.update_link_unavailable, Toast.LENGTH_LONG).show()
@@ -132,17 +142,98 @@ object AppUpdateChecker {
         dialog.show()
     }
 
-    private fun openUpdateUrl(activity: AppCompatActivity, url: String): Boolean {
-        val parsedUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
-        val intent = Intent(Intent.ACTION_VIEW, parsedUri).apply {
-            addCategory(Intent.CATEGORY_BROWSABLE)
+    private fun startUpdateDownload(activity: AppCompatActivity, url: String): Boolean {
+        val downloadUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+        val downloadManager = activity.getSystemService(DownloadManager::class.java) ?: return false
+
+        registerDownloadReceiver(activity.applicationContext, downloadManager)
+
+        val request = DownloadManager.Request(downloadUri)
+            .setTitle(activity.getString(R.string.update_download_title))
+            .setDescription(activity.getString(R.string.update_download_message))
+            .setMimeType("application/vnd.android.package-archive")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
+            .setDestinationInExternalFilesDir(
+                activity,
+                Environment.DIRECTORY_DOWNLOADS,
+                UPDATE_APK_FILE_NAME,
+            )
+
+        activeDownloadId = downloadManager.enqueue(request)
+        Toast.makeText(activity, R.string.update_download_started, Toast.LENGTH_LONG).show()
+        return true
+    }
+
+    private fun registerDownloadReceiver(context: Context, downloadManager: DownloadManager) {
+        if (downloadReceiver != null) {
+            return
         }
-        return try {
-            activity.startActivity(intent)
-            true
-        } catch (_: ActivityNotFoundException) {
-            return false
+
+        downloadReceiver = object : BroadcastReceiver() {
+            override fun onReceive(receiverContext: Context, intent: Intent) {
+                if (intent.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                    return
+                }
+
+                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+                if (downloadId != activeDownloadId) {
+                    return
+                }
+
+                activeDownloadId = -1L
+                val apkUri = downloadManager.getUriForDownloadedFile(downloadId)
+                if (apkUri == null) {
+                    Toast.makeText(receiverContext, R.string.update_download_failed, Toast.LENGTH_LONG).show()
+                    unregisterDownloadReceiver(receiverContext)
+                    return
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    !receiverContext.packageManager.canRequestPackageInstalls()
+                ) {
+                    val settingsIntent = Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:${receiverContext.packageName}"),
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    receiverContext.startActivity(settingsIntent)
+                    Toast.makeText(receiverContext, R.string.update_allow_install_permission, Toast.LENGTH_LONG).show()
+                    unregisterDownloadReceiver(receiverContext)
+                    return
+                }
+
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                try {
+                    receiverContext.startActivity(installIntent)
+                } catch (_: ActivityNotFoundException) {
+                    Toast.makeText(receiverContext, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+                } finally {
+                    unregisterDownloadReceiver(receiverContext)
+                }
+            }
         }
+
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(downloadReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(downloadReceiver, filter)
+        }
+    }
+
+    private fun unregisterDownloadReceiver(context: Context) {
+        val receiver = downloadReceiver ?: return
+        runCatching {
+            context.unregisterReceiver(receiver)
+        }
+        downloadReceiver = null
     }
 
     private fun getCurrentVersionCode(activity: AppCompatActivity): Long {
@@ -150,7 +241,7 @@ object AppUpdateChecker {
         return PackageInfoCompat.getLongVersionCode(packageInfo)
     }
 
-    private fun getPackageInfo(activity: AppCompatActivity) = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+    private fun getPackageInfo(activity: AppCompatActivity) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         activity.packageManager.getPackageInfo(
             activity.packageName,
             PackageManager.PackageInfoFlags.of(0),

@@ -16,6 +16,12 @@
     <string name="update_action_now">Update now</string>
     <string name="update_action_later">Later</string>
     <string name="update_link_unavailable">The update link is not available right now.</string>
+    <string name="update_download_title">Downloading update</string>
+    <string name="update_download_message">Preparing the latest version of GIET ERP.</string>
+    <string name="update_download_started">Update download started.</string>
+    <string name="update_download_failed">The update download could not be completed.</string>
+    <string name="update_allow_install_permission">Allow installation from this app, then tap Update now again.</string>
+    <string name="update_install_unavailable">The installer could not be opened.</string>
 
     <string name="attendance_overview">Attendance Overview</string>
     <string name="attendance_label">Attendance</string>
