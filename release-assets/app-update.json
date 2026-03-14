@@ -1,13 +1,9 @@
 {
-  "latestVersionCode": 2,
-  "latestVersionName": "1.1",
+  "latestVersionCode": 3,
+  "latestVersionName": "1.2",
   "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk",
-  "title": "Update available",
-  "message": "Version 1.1 is available with the new GitHub-powered update flow and release reliability improvements.",
-  "forceUpdate": false,
-  "changelog": [
-    "GitHub update delivery is now live",
-    "Release reliability improvements",
-    "Professional UI and directory enhancements"
-  ]
+  "title": "Update required",
+  "message": "A new version of GIET ERP is required to continue. Please update now.",
+  "forceUpdate": true,
+  "changelog": []
 }

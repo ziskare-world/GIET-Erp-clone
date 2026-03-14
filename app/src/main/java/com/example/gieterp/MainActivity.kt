@@ -40,8 +40,6 @@ class MainActivity : AppCompatActivity() {
         button = findViewById(R.id.submit)
         rollnoInput = findViewById(R.id.rollno)
 
-        AppUpdateChecker.checkForUpdates(this)
-
         button.setOnClickListener {
             val rollNo = rollnoInput.text.toString().trim()
             if (rollNo.isEmpty()) {
@@ -61,6 +59,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, MainActivity2::class.java))
             finish()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppUpdateChecker.checkForUpdates(this)
     }
 
     private fun showSpecialAccessDialog() {

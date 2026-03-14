@@ -65,7 +65,6 @@ class MainActivity2 : AppCompatActivity() {
 
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
         activeRollNo = rollNo
-        AppUpdateChecker.checkForUpdates(this)
         setupSwipeToRefresh()
         fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
 
@@ -94,6 +93,11 @@ class MainActivity2 : AppCompatActivity() {
         semesterButton.setOnClickListener {
             startActivity(Intent(this, Semester::class.java))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppUpdateChecker.checkForUpdates(this)
     }
 
     private fun setupSwipeToRefresh() {

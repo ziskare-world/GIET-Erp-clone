@@ -3,9 +3,6 @@ package com.example.gieterp
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -20,10 +17,11 @@ object AppUpdateChecker {
     private const val UPDATE_PREF_KEY_DISMISSED_VERSION = "dismissedUpdateVersion"
     private const val ASSET_PREFIX = "asset://"
 
-    private var hasCheckedThisProcess = false
+    private var isCheckInProgress = false
+    private var activeDialog: AlertDialog? = null
 
     fun checkForUpdates(activity: AppCompatActivity) {
-        if (hasCheckedThisProcess) {
+        if (isCheckInProgress || activeDialog?.isShowing == true) {
             return
         }
 
@@ -32,14 +30,24 @@ object AppUpdateChecker {
             return
         }
 
-        hasCheckedThisProcess = true
+        isCheckInProgress = true
         if (metadataLocation.startsWith(ASSET_PREFIX)) {
             val assetName = metadataLocation.removePrefix(ASSET_PREFIX)
             val assetJson = runCatching {
                 activity.assets.open(assetName).bufferedReader().use { it.readText() }
-            }.getOrNull() ?: return
+            }.getOrNull()
 
-            val jsonObject = runCatching { JSONObject(assetJson) }.getOrNull() ?: return
+            if (assetJson == null) {
+                isCheckInProgress = false
+                return
+            }
+
+            val jsonObject = runCatching { JSONObject(assetJson) }.getOrNull()
+            if (jsonObject == null) {
+                isCheckInProgress = false
+                return
+            }
+
             maybeShowUpdateDialog(activity, jsonObject)
             return
         }
@@ -52,6 +60,7 @@ object AppUpdateChecker {
                 maybeShowUpdateDialog(activity, jsonObject)
             },
             {
+                isCheckInProgress = false
             },
         )
         VolleyProvider.getRequestQueue(activity).add(request)
@@ -59,6 +68,7 @@ object AppUpdateChecker {
 
     private fun maybeShowUpdateDialog(activity: AppCompatActivity, jsonObject: JSONObject) {
         if (activity.isFinishing || activity.isDestroyed) {
+            isCheckInProgress = false
             return
         }
 
@@ -66,29 +76,30 @@ object AppUpdateChecker {
             json = jsonObject,
             defaultTitle = activity.getString(R.string.update_available_title),
             defaultMessage = activity.getString(R.string.update_available_message),
-        ) ?: return
+        )
+
+        if (updateInfo == null) {
+            isCheckInProgress = false
+            return
+        }
 
         val currentVersionCode = getCurrentVersionCode(activity)
         if (updateInfo.latestVersionCode <= currentVersionCode) {
+            isCheckInProgress = false
             return
         }
 
         val preferences = activity.getSharedPreferences(AppSession.PREFERENCES_NAME, AppCompatActivity.MODE_PRIVATE)
         val dismissedVersion = preferences.getLong(UPDATE_PREF_KEY_DISMISSED_VERSION, -1L)
         if (!updateInfo.forceUpdate && dismissedVersion == updateInfo.latestVersionCode) {
+            isCheckInProgress = false
             return
         }
 
-        val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_app_update, null)
-        bindDialogContent(
-            activity = activity,
-            dialogView = dialogView,
-            updateInfo = updateInfo,
-        )
-
         val dialogBuilder = MaterialAlertDialogBuilder(activity)
-            .setView(dialogView)
-            .setCancelable(!updateInfo.forceUpdate)
+            .setTitle(updateInfo.title)
+            .setMessage(updateInfo.message)
+            .setCancelable(false)
             .setPositiveButton(R.string.update_action_now, null)
 
         if (!updateInfo.forceUpdate) {
@@ -96,13 +107,11 @@ object AppUpdateChecker {
         }
 
         val dialog = dialogBuilder.create()
+        activeDialog = dialog
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
                 if (openUpdateUrl(activity, updateInfo.downloadUrl)) {
                     dialog.dismiss()
-                    if (updateInfo.forceUpdate) {
-                        activity.finishAffinity()
-                    }
                 } else {
                     Toast.makeText(activity, R.string.update_link_unavailable, Toast.LENGTH_LONG).show()
                 }
@@ -115,35 +124,11 @@ object AppUpdateChecker {
                 dialog.dismiss()
             }
         }
-        dialog.show()
-    }
-
-    private fun bindDialogContent(
-        activity: AppCompatActivity,
-        dialogView: View,
-        updateInfo: AppUpdateInfo,
-    ) {
-        val currentVersionName = getCurrentVersionName(activity)
-        val titleView = dialogView.findViewById<TextView>(R.id.updateTitle)
-        val badgeView = dialogView.findViewById<TextView>(R.id.updateVersionBadge)
-        val messageView = dialogView.findViewById<TextView>(R.id.updateMessage)
-        val headingView = dialogView.findViewById<TextView>(R.id.updateChangelogHeading)
-        val changelogView = dialogView.findViewById<TextView>(R.id.updateChangelog)
-
-        titleView.text = updateInfo.title
-        badgeView.text = activity.getString(
-            R.string.update_version_summary,
-            currentVersionName,
-            updateInfo.latestVersionName,
-        )
-        messageView.text = updateInfo.message
-
-        if (updateInfo.changelog.isEmpty()) {
-            headingView.visibility = View.GONE
-            changelogView.visibility = View.GONE
-        } else {
-            changelogView.text = updateInfo.changelog.joinToString("\n") { "• $it" }
+        dialog.setOnDismissListener {
+            activeDialog = null
+            isCheckInProgress = false
         }
+        dialog.show()
     }
 
     private fun openUpdateUrl(activity: AppCompatActivity, url: String): Boolean {
@@ -160,10 +145,6 @@ object AppUpdateChecker {
     private fun getCurrentVersionCode(activity: AppCompatActivity): Long {
         val packageInfo = getPackageInfo(activity)
         return PackageInfoCompat.getLongVersionCode(packageInfo)
-    }
-
-    private fun getCurrentVersionName(activity: AppCompatActivity): String {
-        return getPackageInfo(activity).versionName.orEmpty().ifBlank { getCurrentVersionCode(activity).toString() }
     }
 
     private fun getPackageInfo(activity: AppCompatActivity) = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
