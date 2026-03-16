@@ -26,12 +26,13 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import org.json.JSONObject
+import java.io.File
 
 object AppUpdateChecker {
     private const val UPDATE_PREF_KEY_DISMISSED_VERSION = "dismissedUpdateVersion"
     private const val UPDATE_PREF_KEY_PENDING_INSTALL_VERSION = "pendingInstallVersion"
     private const val ASSET_PREFIX = "asset://"
-    private const val UPDATE_APK_FILE_NAME = "gieterp-update.apk"
+    private const val UPDATE_APK_FILE_PREFIX = "gieterp-update-v"
     private const val DOWNLOAD_PROGRESS_INTERVAL_MS = 500L
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -41,7 +42,7 @@ object AppUpdateChecker {
     private var dialogState: UpdateDialogState? = null
     private var activeDownloadId: Long = -1L
     private var activeDownloadManager: DownloadManager? = null
-    private var downloadedApkUri: Uri? = null
+    private var downloadedApkFile: File? = null
     private var progressRunnable: Runnable? = null
 
     internal const val EXTRA_UPDATE_VERSION_CODE = "extraUpdateVersionCode"
@@ -102,6 +103,11 @@ object AppUpdateChecker {
     private fun buildFreshMetadataUrl(baseUrl: String): String {
         val separator = if (baseUrl.contains("?")) "&" else "?"
         return "$baseUrl${separator}ts=${System.currentTimeMillis()}"
+    }
+
+    private fun buildFreshDownloadUrl(baseUrl: String, versionCode: Long): String {
+        val separator = if (baseUrl.contains("?")) "&" else "?"
+        return "$baseUrl${separator}vc=$versionCode&ts=${System.currentTimeMillis()}"
     }
 
     private fun maybeShowUpdateDialog(activity: AppCompatActivity, jsonObject: JSONObject) {
@@ -175,7 +181,7 @@ object AppUpdateChecker {
             when (state.phase) {
                 UpdatePhase.AVAILABLE,
                 UpdatePhase.FAILED -> {
-                    if (startUpdateDownload(activity, updateInfo.downloadUrl, state)) {
+                    if (startUpdateDownload(activity, updateInfo.downloadUrl, state, updateInfo.latestVersionCode)) {
                         renderDownloadingState(activity, state, 0, isIndeterminate = true)
                     } else {
                         Toast.makeText(activity, R.string.update_link_unavailable, Toast.LENGTH_LONG).show()
@@ -295,13 +301,20 @@ object AppUpdateChecker {
         activity: AppCompatActivity,
         url: String,
         state: UpdateDialogState,
+        expectedVersionCode: Long,
     ): Boolean {
-        val downloadUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+        val downloadUri = runCatching { Uri.parse(buildFreshDownloadUrl(url, expectedVersionCode)) }.getOrNull() ?: return false
         val downloadManager = activity.getSystemService(DownloadManager::class.java) ?: return false
 
         return runCatching {
             stopProgressUpdates()
-            downloadedApkUri = null
+            downloadedApkFile = null
+            val downloadsDirectory = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: return false
+            val destinationFile = File(downloadsDirectory, "$UPDATE_APK_FILE_PREFIX$expectedVersionCode.apk")
+            cleanupOldUpdateApks(downloadsDirectory, destinationFile.name)
+            if (destinationFile.exists()) {
+                destinationFile.delete()
+            }
 
             val request = DownloadManager.Request(downloadUri)
                 .setTitle(activity.getString(R.string.update_download_title))
@@ -313,20 +326,21 @@ object AppUpdateChecker {
                 .setDestinationInExternalFilesDir(
                     activity,
                     Environment.DIRECTORY_DOWNLOADS,
-                    UPDATE_APK_FILE_NAME,
+                    destinationFile.name,
                 )
 
             activeDownloadManager = downloadManager
             activeDownloadId = downloadManager.enqueue(request)
+            downloadedApkFile = destinationFile
             Toast.makeText(activity, R.string.update_download_started, Toast.LENGTH_LONG).show()
-            startProgressUpdates(activity.applicationContext, state)
+            startProgressUpdates(activity.applicationContext, state, expectedVersionCode)
             true
         }.getOrElse {
             false
         }
     }
 
-    private fun startProgressUpdates(context: Context, state: UpdateDialogState) {
+    private fun startProgressUpdates(context: Context, state: UpdateDialogState, expectedVersionCode: Long) {
         stopProgressUpdates()
         val runnable = object : Runnable {
             override fun run() {
@@ -361,9 +375,14 @@ object AppUpdateChecker {
                         }
 
                         DownloadManager.STATUS_SUCCESSFUL -> {
-                            downloadedApkUri = downloadManager.getUriForDownloadedFile(downloadId)
                             activeDownloadId = -1L
-                            renderReadyToInstallState(context, state)
+                            if (isDownloadedApkCurrent(context, expectedVersionCode)) {
+                                renderReadyToInstallState(context, state)
+                            } else {
+                                downloadedApkFile = null
+                                renderFailedState(context, state)
+                                Toast.makeText(context, R.string.update_download_failed, Toast.LENGTH_LONG).show()
+                            }
                         }
 
                         DownloadManager.STATUS_FAILED -> {
@@ -392,8 +411,8 @@ object AppUpdateChecker {
         state: UpdateDialogState,
         updateVersionCode: Long,
     ) {
-        val apkUri = downloadedApkUri
-        if (apkUri == null) {
+        val apkFile = downloadedApkFile
+        if (apkFile == null || !apkFile.exists()) {
             renderFailedState(activity, state)
             return
         }
@@ -420,8 +439,7 @@ object AppUpdateChecker {
             }
             val sessionId = packageInstaller.createSession(params)
             packageInstaller.openSession(sessionId).use { session ->
-                activity.contentResolver.openInputStream(apkUri).use { inputStream ->
-                    requireNotNull(inputStream)
+                apkFile.inputStream().use { inputStream ->
                     session.openWrite("app-update", 0, -1).use { outputStream ->
                         inputStream.copyTo(outputStream)
                         session.fsync(outputStream)
@@ -469,6 +487,35 @@ object AppUpdateChecker {
         getUpdatePreferences(context).edit {
             putLong(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION, versionCode)
         }
+    }
+
+    private fun cleanupOldUpdateApks(downloadsDirectory: File, keepFileName: String) {
+        downloadsDirectory.listFiles()
+            ?.filter { file ->
+                (file.name.startsWith(UPDATE_APK_FILE_PREFIX) || file.name == "gieterp-update.apk") &&
+                    file.name != keepFileName
+            }
+            ?.forEach(File::delete)
+    }
+
+    private fun isDownloadedApkCurrent(context: Context, expectedVersionCode: Long): Boolean {
+        val apkFile = downloadedApkFile ?: return false
+        if (!apkFile.exists()) {
+            return false
+        }
+
+        val archivePackageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getPackageArchiveInfo(
+                apkFile.absolutePath,
+                PackageManager.PackageInfoFlags.of(0),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)
+        } ?: return false
+
+        return archivePackageInfo.packageName == context.packageName &&
+            PackageInfoCompat.getLongVersionCode(archivePackageInfo) >= expectedVersionCode
     }
 
     internal fun markInstalledVersion(context: Context, versionCode: Long) {
