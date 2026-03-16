@@ -29,6 +29,7 @@ import org.json.JSONObject
 
 object AppUpdateChecker {
     private const val UPDATE_PREF_KEY_DISMISSED_VERSION = "dismissedUpdateVersion"
+    private const val UPDATE_PREF_KEY_PENDING_INSTALL_VERSION = "pendingInstallVersion"
     private const val ASSET_PREFIX = "asset://"
     private const val UPDATE_APK_FILE_NAME = "gieterp-update.apk"
     private const val DOWNLOAD_PROGRESS_INTERVAL_MS = 500L
@@ -42,6 +43,8 @@ object AppUpdateChecker {
     private var activeDownloadManager: DownloadManager? = null
     private var downloadedApkUri: Uri? = null
     private var progressRunnable: Runnable? = null
+
+    internal const val EXTRA_UPDATE_VERSION_CODE = "extraUpdateVersionCode"
 
     fun checkForUpdates(activity: AppCompatActivity) {
         if (isCheckInProgress || activeDialog?.isShowing == true) {
@@ -118,13 +121,16 @@ object AppUpdateChecker {
             return
         }
 
+        val preferences = getUpdatePreferences(activity)
         val currentVersionCode = getCurrentVersionCode(activity)
-        if (updateInfo.latestVersionCode <= currentVersionCode) {
+        clearCompletedInstallSuppression(preferences, currentVersionCode)
+
+        val pendingInstallVersion = preferences.getLong(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION, -1L)
+        if (updateInfo.latestVersionCode <= maxOf(currentVersionCode, pendingInstallVersion)) {
             isCheckInProgress = false
             return
         }
 
-        val preferences = activity.getSharedPreferences(AppSession.PREFERENCES_NAME, AppCompatActivity.MODE_PRIVATE)
         val dismissedVersion = preferences.getLong(UPDATE_PREF_KEY_DISMISSED_VERSION, -1L)
         if (!updateInfo.forceUpdate && dismissedVersion == updateInfo.latestVersionCode) {
             isCheckInProgress = false
@@ -213,6 +219,7 @@ object AppUpdateChecker {
         updateInfo: AppUpdateInfo,
     ) {
         state.phase = UpdatePhase.AVAILABLE
+        state.statusView.tag = updateInfo.latestVersionCode
         state.statusView.text = context.getString(R.string.update_status_ready, updateInfo.latestVersionName)
         state.progressBar.visibility = View.GONE
         state.progressBar.isIndeterminate = false
@@ -377,6 +384,14 @@ object AppUpdateChecker {
     }
 
     private fun installDownloadedApk(activity: AppCompatActivity, state: UpdateDialogState) {
+        installDownloadedApk(activity, state, state.statusView.tag as? Long ?: -1L)
+    }
+
+    private fun installDownloadedApk(
+        activity: AppCompatActivity,
+        state: UpdateDialogState,
+        updateVersionCode: Long,
+    ) {
         val apkUri = downloadedApkUri
         if (apkUri == null) {
             renderFailedState(activity, state)
@@ -398,6 +413,7 @@ object AppUpdateChecker {
         renderInstallingState(activity, state)
 
         runCatching {
+            markPendingInstallVersion(activity, updateVersionCode)
             val packageInstaller = activity.packageManager.packageInstaller
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setAppPackageName(activity.packageName)
@@ -416,6 +432,7 @@ object AppUpdateChecker {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
                 val intent = Intent(activity, UpdateInstallReceiver::class.java).apply {
                     action = UpdateInstallReceiver.ACTION_INSTALL_STATUS
+                    putExtra(EXTRA_UPDATE_VERSION_CODE, updateVersionCode)
                 }
                 val pendingIntent = PendingIntent.getBroadcast(
                     activity,
@@ -426,8 +443,44 @@ object AppUpdateChecker {
                 session.commit(pendingIntent.intentSender)
             }
         }.onFailure {
+            clearPendingInstallVersion(activity)
             renderReadyToInstallState(activity, state)
             Toast.makeText(activity, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun getUpdatePreferences(context: Context) =
+        context.getSharedPreferences(AppSession.PREFERENCES_NAME, AppCompatActivity.MODE_PRIVATE)
+
+    private fun clearCompletedInstallSuppression(
+        preferences: android.content.SharedPreferences,
+        currentVersionCode: Long,
+    ) {
+        val pendingInstallVersion = preferences.getLong(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION, -1L)
+        if (pendingInstallVersion > 0L && currentVersionCode >= pendingInstallVersion) {
+            preferences.edit {
+                remove(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION)
+                remove(UPDATE_PREF_KEY_DISMISSED_VERSION)
+            }
+        }
+    }
+
+    private fun markPendingInstallVersion(context: Context, versionCode: Long) {
+        getUpdatePreferences(context).edit {
+            putLong(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION, versionCode)
+        }
+    }
+
+    internal fun markInstalledVersion(context: Context, versionCode: Long) {
+        getUpdatePreferences(context).edit {
+            putLong(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION, versionCode)
+            putLong(UPDATE_PREF_KEY_DISMISSED_VERSION, versionCode)
+        }
+    }
+
+    internal fun clearPendingInstallVersion(context: Context) {
+        getUpdatePreferences(context).edit {
+            remove(UPDATE_PREF_KEY_PENDING_INSTALL_VERSION)
         }
     }
 

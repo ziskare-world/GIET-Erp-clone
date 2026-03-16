@@ -28,6 +28,10 @@ class UpdateInstallReceiver : BroadcastReceiver() {
             }
 
             PackageInstaller.STATUS_SUCCESS -> {
+                val installedVersionCode = intent.getLongExtra(AppUpdateChecker.EXTRA_UPDATE_VERSION_CODE, -1L)
+                if (installedVersionCode > 0L) {
+                    AppUpdateChecker.markInstalledVersion(context, installedVersionCode)
+                }
                 Toast.makeText(context, R.string.update_install_success, Toast.LENGTH_LONG).show()
                 val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -40,6 +44,7 @@ class UpdateInstallReceiver : BroadcastReceiver() {
             }
 
             else -> {
+                AppUpdateChecker.clearPendingInstallVersion(context)
                 val statusMessage = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                     ?: context.getString(R.string.update_install_failed)
                 Toast.makeText(
