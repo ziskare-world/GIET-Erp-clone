@@ -146,24 +146,40 @@ object AppUpdateChecker {
         val downloadUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
         val downloadManager = activity.getSystemService(DownloadManager::class.java) ?: return false
 
-        registerDownloadReceiver(activity.applicationContext, downloadManager)
+        return runCatching {
+            registerDownloadReceiver(activity.applicationContext, downloadManager)
 
-        val request = DownloadManager.Request(downloadUri)
-            .setTitle(activity.getString(R.string.update_download_title))
-            .setDescription(activity.getString(R.string.update_download_message))
-            .setMimeType("application/vnd.android.package-archive")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
-            .setDestinationInExternalFilesDir(
-                activity,
-                Environment.DIRECTORY_DOWNLOADS,
-                UPDATE_APK_FILE_NAME,
-            )
+            val request = DownloadManager.Request(downloadUri)
+                .setTitle(activity.getString(R.string.update_download_title))
+                .setDescription(activity.getString(R.string.update_download_message))
+                .setMimeType("application/vnd.android.package-archive")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+                .setDestinationInExternalFilesDir(
+                    activity,
+                    Environment.DIRECTORY_DOWNLOADS,
+                    UPDATE_APK_FILE_NAME,
+                )
 
-        activeDownloadId = downloadManager.enqueue(request)
-        Toast.makeText(activity, R.string.update_download_started, Toast.LENGTH_LONG).show()
-        return true
+            activeDownloadId = downloadManager.enqueue(request)
+            Toast.makeText(activity, R.string.update_download_started, Toast.LENGTH_LONG).show()
+            true
+        }.getOrElse {
+            openExternalUpdateUrl(activity, downloadUri)
+        }
+    }
+
+    private fun openExternalUpdateUrl(activity: AppCompatActivity, updateUri: Uri): Boolean {
+        val browserIntent = Intent(Intent.ACTION_VIEW, updateUri).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+        return try {
+            activity.startActivity(browserIntent)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
     }
 
     private fun registerDownloadReceiver(context: Context, downloadManager: DownloadManager) {
