@@ -28,11 +28,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        AttendancePushTokenSync.requestNotificationPermissionIfNeeded(this)
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val storedRollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
         if (!storedRollNo.isNullOrEmpty()) {
-            startActivity(Intent(this, MainActivity2::class.java))
+            val dashboardIntent = Intent(this, MainActivity2::class.java)
+            AttendanceNotificationIntents.copyExtras(intent, dashboardIntent)
+            startActivity(dashboardIntent)
             finish()
             return
         }
@@ -60,7 +63,11 @@ class MainActivity : AppCompatActivity() {
                 putString(AppSession.KEY_ROLL_NO, rollNo)
             }
 
-            startActivity(Intent(this, MainActivity2::class.java))
+            AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
+
+            val dashboardIntent = Intent(this, MainActivity2::class.java)
+            AttendanceNotificationIntents.copyExtras(intent, dashboardIntent)
+            startActivity(dashboardIntent)
             finish()
         }
     }

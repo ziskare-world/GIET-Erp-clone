@@ -4,6 +4,13 @@
     <string name="giet_erp">GIET ERP</string>
     <string name="app_version_placeholder">Version</string>
     <string name="app_name_with_version">%1$s v%2$s</string>
+    <string name="attendance_token_register_url"></string>
+    <string name="attendance_token_unregister_url"></string>
+    <string name="attendance_notification_channel_name">Attendance Updates</string>
+    <string name="attendance_notification_channel_description">Notifications for new or updated attendance entries</string>
+    <string name="attendance_notification_title">Attendance Updated</string>
+    <string name="attendance_notification_body_format">%1$s: %2$s</string>
+    <string name="attendance_notification_status_only">Attendance updated: %1$s</string>
     <string name="welcome_subtitle">Student Information Dashboard</string>
     <string name="enter_rollno">Enter Roll Number</string>
     <string name="submit">Continue</string>

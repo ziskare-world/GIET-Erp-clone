@@ -35,11 +35,13 @@ class MainActivity2 : AppCompatActivity() {
 
     private var lastAttendanceResponse: String? = null
     private var activeRollNo: String? = null
+    private var shouldOpenAttendanceAfterRefresh = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main2)
+        AttendancePushTokenSync.requestNotificationPermissionIfNeeded(this)
 
         findViewById<View>(R.id.main).applySystemBarsPadding()
 
@@ -60,7 +62,9 @@ class MainActivity2 : AppCompatActivity() {
         if (rollNo.isNullOrBlank()) {
             Toast.makeText(this, getString(R.string.roll_number_not_found_sign_in), Toast.LENGTH_LONG).show()
             Log.e("MainActivity2", "Roll number not found in SharedPreferences")
-            startActivity(Intent(this, MainActivity::class.java))
+            val loginIntent = Intent(this, MainActivity::class.java)
+            AttendanceNotificationIntents.copyExtras(intent, loginIntent)
+            startActivity(loginIntent)
             finish()
             return
         }
@@ -68,10 +72,13 @@ class MainActivity2 : AppCompatActivity() {
         appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
         activeRollNo = rollNo
+        shouldOpenAttendanceAfterRefresh = AttendanceNotificationIntents.shouldOpenAttendance(intent)
         setupSwipeToRefresh()
+        AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
         fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
 
         logoutButton.setOnClickListener {
+            AttendancePushTokenSync.unregisterCurrentToken(applicationContext, rollNo)
             sharedPref.edit {
                 remove(AppSession.KEY_ROLL_NO)
                 remove(AppSession.KEY_STUDENT_ID)
@@ -101,6 +108,18 @@ class MainActivity2 : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         AppUpdateChecker.checkForUpdates(this)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (AttendanceNotificationIntents.shouldOpenAttendance(intent)) {
+            shouldOpenAttendanceAfterRefresh = true
+            val rollNo = activeRollNo
+            if (!rollNo.isNullOrBlank()) {
+                fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
+            }
+        }
     }
 
     private fun setupSwipeToRefresh() {
@@ -138,9 +157,14 @@ class MainActivity2 : AppCompatActivity() {
                 finishLoadingState()
                 lastAttendanceResponse = response
                 parseAttendance(response)
+                if (shouldOpenAttendanceAfterRefresh) {
+                    shouldOpenAttendanceAfterRefresh = false
+                    sendResponse(response)
+                }
             },
             { error ->
                 finishLoadingState()
+                shouldOpenAttendanceAfterRefresh = false
                 val errorMessage = error.message ?: getString(R.string.error_unknown_network)
                 Toast.makeText(this, getString(R.string.error_network_format, errorMessage), Toast.LENGTH_LONG).show()
                 Log.e("AttendanceError", errorMessage, error)

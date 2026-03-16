@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+val hasGoogleServicesConfig = file("google-services.json").exists()
+if (hasGoogleServicesConfig) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
@@ -23,8 +28,9 @@ android {
         applicationId = "com.example.gieterp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = 12
+        versionName = "1.11"
+        buildConfigField("boolean", "FCM_ENABLED", hasGoogleServicesConfig.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,6 +62,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        buildConfig = true
+    }
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -64,6 +73,8 @@ android {
 dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
