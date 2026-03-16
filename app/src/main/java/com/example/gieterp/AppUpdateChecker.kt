@@ -63,9 +63,10 @@ object AppUpdateChecker {
             return
         }
 
-        val request = JsonObjectRequest(
+        val freshMetadataUrl = buildFreshMetadataUrl(metadataLocation)
+        val request = object : JsonObjectRequest(
             Request.Method.GET,
-            metadataLocation,
+            freshMetadataUrl,
             null,
             { jsonObject ->
                 maybeShowUpdateDialog(activity, jsonObject)
@@ -73,8 +74,19 @@ object AppUpdateChecker {
             {
                 isCheckInProgress = false
             },
-        )
+        ) {
+            override fun getHeaders(): MutableMap<String, String> = mutableMapOf(
+                "Cache-Control" to "no-cache",
+                "Pragma" to "no-cache",
+            )
+        }
+        request.setShouldCache(false)
         VolleyProvider.getRequestQueue(activity).add(request)
+    }
+
+    private fun buildFreshMetadataUrl(baseUrl: String): String {
+        val separator = if (baseUrl.contains("?")) "&" else "?"
+        return "$baseUrl${separator}ts=${System.currentTimeMillis()}"
     }
 
     private fun maybeShowUpdateDialog(activity: AppCompatActivity, jsonObject: JSONObject) {
