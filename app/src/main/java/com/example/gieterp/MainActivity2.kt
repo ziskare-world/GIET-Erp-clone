@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +22,7 @@ import org.json.JSONObject
 class MainActivity2 : AppCompatActivity() {
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
+    private val adsConsentManager by lazy { AdsConsentManager.getInstance(applicationContext) }
 
     private lateinit var loadingOverlay: View
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -32,6 +34,9 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var attendancePercentText: TextView
     private lateinit var bunkedClassText: TextView
     private lateinit var semesterButton: ImageButton
+    private lateinit var dashboardAdContainer: FrameLayout
+    private lateinit var privacyChoicesText: TextView
+    private lateinit var bannerController: DashboardBannerAdController
 
     private var lastAttendanceResponse: String? = null
     private var activeRollNo: String? = null
@@ -55,6 +60,9 @@ class MainActivity2 : AppCompatActivity() {
         attendancePercentText = findViewById(R.id.attendancePercentText)
         bunkedClassText = findViewById(R.id.bunkedClassText)
         semesterButton = findViewById(R.id.getSemester)
+        dashboardAdContainer = findViewById(R.id.dashboardAdContainer)
+        privacyChoicesText = findViewById(R.id.privacyChoicesText)
+        bannerController = DashboardBannerAdController(this, dashboardAdContainer)
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
@@ -74,6 +82,7 @@ class MainActivity2 : AppCompatActivity() {
         activeRollNo = rollNo
         shouldOpenAttendanceAfterRefresh = AttendanceNotificationIntents.shouldOpenAttendance(intent)
         setupSwipeToRefresh()
+        setupAdsFooter()
         AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
         fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
 
@@ -108,6 +117,20 @@ class MainActivity2 : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         AppUpdateChecker.checkForUpdates(this)
+        if (adsConsentManager.canRequestAds) {
+            bannerController.loadBannerIfNeeded()
+        }
+        bannerController.onResume()
+    }
+
+    override fun onPause() {
+        bannerController.onPause()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        bannerController.onDestroy()
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -139,6 +162,40 @@ class MainActivity2 : AppCompatActivity() {
                 semester = StudentAnalytics.calculateCurrentSemester(rollNo),
                 fromSwipeRefresh = true,
             )
+        }
+    }
+
+    private fun setupAdsFooter() {
+        bannerController.showContainer(false)
+        updatePrivacyChoicesVisibility()
+        privacyChoicesText.setOnClickListener {
+            adsConsentManager.showPrivacyOptionsForm(this) {
+                updatePrivacyChoicesVisibility()
+                if (adsConsentManager.canRequestAds) {
+                    (application as GietErpApp).initializeAdsIfNeeded()
+                    bannerController.loadBannerIfNeeded()
+                } else {
+                    bannerController.showContainer(false)
+                }
+            }
+        }
+
+        adsConsentManager.gatherConsent(this) {
+            updatePrivacyChoicesVisibility()
+            if (adsConsentManager.canRequestAds) {
+                (application as GietErpApp).initializeAdsIfNeeded()
+                bannerController.loadBannerIfNeeded()
+            } else {
+                bannerController.showContainer(false)
+            }
+        }
+    }
+
+    private fun updatePrivacyChoicesVisibility() {
+        privacyChoicesText.visibility = if (adsConsentManager.isPrivacyOptionsRequired) {
+            View.VISIBLE
+        } else {
+            View.GONE
         }
     }
 

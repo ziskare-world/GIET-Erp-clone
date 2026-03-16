@@ -70,7 +70,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="14dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dashboardFooter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topCard">
@@ -230,6 +230,41 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <LinearLayout
+        android:id="@+id/dashboardFooter"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/privacyChoicesText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/TextAppearance.GietErp.BodySecondary"
+            android:layout_gravity="end"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="4dp"
+            android:text="@string/privacy_choices"
+            android:textColor="@color/accent_secondary"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/dashboardAdContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_card"
+            android:minHeight="52dp"
+            android:padding="10dp"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/loadingOverlay"

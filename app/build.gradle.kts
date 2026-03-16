@@ -28,9 +28,10 @@ android {
         applicationId = "com.example.gieterp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.11"
+        versionCode = 13
+        versionName = "1.12"
         buildConfigField("boolean", "FCM_ENABLED", hasGoogleServicesConfig.toString())
+        resValue("string", "admob_app_id", "ca-app-pub-5619760951459090~8317918493")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,11 +48,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            resValue("string", "admob_banner_ad_unit_id", "ca-app-pub-3940256099942544/9214589741")
+        }
         release {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = false
+            resValue("string", "admob_banner_ad_unit_id", "ca-app-pub-5619760951459090/1399957246")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -75,6 +80,8 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.play.services.ads)
+    implementation(libs.ump)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

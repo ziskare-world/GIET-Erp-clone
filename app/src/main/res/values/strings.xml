@@ -11,6 +11,7 @@
     <string name="attendance_notification_title">Attendance Updated</string>
     <string name="attendance_notification_body_format">%1$s: %2$s</string>
     <string name="attendance_notification_status_only">Attendance updated: %1$s</string>
+    <string name="privacy_choices">Privacy choices</string>
     <string name="welcome_subtitle">Student Information Dashboard</string>
     <string name="enter_rollno">Enter Roll Number</string>
     <string name="submit">Continue</string>

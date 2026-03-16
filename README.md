@@ -21,3 +21,13 @@ To enable it end-to-end:
    - optional `attendanceDate`, `semester`, `updatedAt`
 
 Tapping the notification opens the app, refreshes attendance, and routes the user into the attendance report screen.
+
+## AdMob dashboard banner
+
+The dashboard now supports an anchored adaptive AdMob banner at the bottom of the screen with Google UMP consent handling.
+
+Configured IDs:
+
+- App ID: `ca-app-pub-5619760951459090~8317918493`
+- Debug banner unit: Google adaptive banner test unit
+- Release banner unit: `ca-app-pub-5619760951459090/1399957246`
