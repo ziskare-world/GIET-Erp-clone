@@ -2,6 +2,8 @@
     <string name="app_name">GIET ERP</string>
 
     <string name="giet_erp">GIET ERP</string>
+    <string name="app_version_placeholder">Version</string>
+    <string name="app_name_with_version">%1$s v%2$s</string>
     <string name="welcome_subtitle">Student Information Dashboard</string>
     <string name="enter_rollno">Enter Roll Number</string>
     <string name="submit">Continue</string>
@@ -22,6 +24,18 @@
     <string name="update_download_failed">The update download could not be completed.</string>
     <string name="update_allow_install_permission">Allow installation from this app, then tap Update now again.</string>
     <string name="update_install_unavailable">The installer could not be opened.</string>
+    <string name="update_status_ready">Version %1$s is ready to download.</string>
+    <string name="update_status_preparing_download">Preparing secure download…</string>
+    <string name="update_status_downloading_percent">Downloading update… %1$d%%</string>
+    <string name="update_status_ready_to_install">Download complete. Tap Install to continue.</string>
+    <string name="update_status_installing">Opening installer…</string>
+    <string name="update_action_downloading">Downloading…</string>
+    <string name="update_action_install">Install</string>
+    <string name="update_action_installing">Installing…</string>
+    <string name="update_action_retry">Retry</string>
+    <string name="update_install_success">Update installed successfully.</string>
+    <string name="update_install_failed">Update installation failed.</string>
+    <string name="update_install_failed_format">Update installation failed: %1$s</string>
 
     <string name="attendance_overview">Attendance Overview</string>
     <string name="attendance_label">Attendance</string>

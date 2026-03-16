@@ -1,16 +1,20 @@
 package com.example.gieterp
 
 import android.app.DownloadManager
-import android.content.ActivityNotFoundException
-import android.content.BroadcastReceiver
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -18,18 +22,26 @@ import androidx.core.content.edit
 import androidx.core.content.pm.PackageInfoCompat
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import org.json.JSONObject
 
 object AppUpdateChecker {
     private const val UPDATE_PREF_KEY_DISMISSED_VERSION = "dismissedUpdateVersion"
     private const val ASSET_PREFIX = "asset://"
     private const val UPDATE_APK_FILE_NAME = "gieterp-update.apk"
+    private const val DOWNLOAD_PROGRESS_INTERVAL_MS = 500L
+
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var isCheckInProgress = false
     private var activeDialog: AlertDialog? = null
+    private var dialogState: UpdateDialogState? = null
     private var activeDownloadId: Long = -1L
-    private var downloadReceiver: BroadcastReceiver? = null
+    private var activeDownloadManager: DownloadManager? = null
+    private var downloadedApkUri: Uri? = null
+    private var progressRunnable: Runnable? = null
 
     fun checkForUpdates(activity: AppCompatActivity) {
         if (isCheckInProgress || activeDialog?.isShowing == true) {
@@ -119,47 +131,170 @@ object AppUpdateChecker {
             return
         }
 
-        val dialogBuilder = MaterialAlertDialogBuilder(activity)
-            .setTitle(updateInfo.title)
-            .setMessage(updateInfo.message)
-            .setCancelable(false)
-            .setPositiveButton(R.string.update_action_now, null)
+        showUpdateDialog(
+            activity = activity,
+            updateInfo = updateInfo,
+            preferences = preferences,
+        )
+    }
 
-        if (!updateInfo.forceUpdate) {
-            dialogBuilder.setNegativeButton(R.string.update_action_later, null)
+    private fun showUpdateDialog(
+        activity: AppCompatActivity,
+        updateInfo: AppUpdateInfo,
+        preferences: android.content.SharedPreferences,
+    ) {
+        val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_app_update, null)
+        val state = UpdateDialogState(
+            titleView = dialogView.findViewById(R.id.updateTitle),
+            messageView = dialogView.findViewById(R.id.updateMessage),
+            statusView = dialogView.findViewById(R.id.updateStatusText),
+            progressBar = dialogView.findViewById(R.id.updateProgressBar),
+            primaryButton = dialogView.findViewById(R.id.updatePrimaryButton),
+            secondaryButton = dialogView.findViewById(R.id.updateSecondaryButton),
+        )
+
+        state.titleView.text = updateInfo.title
+        state.messageView.text = updateInfo.message
+        renderAvailableState(activity, state, updateInfo)
+
+        val dialog = MaterialAlertDialogBuilder(activity)
+            .setView(dialogView)
+            .setCancelable(!updateInfo.forceUpdate)
+            .create()
+
+        activeDialog = dialog
+        dialogState = state
+
+        state.primaryButton.setOnClickListener {
+            when (state.phase) {
+                UpdatePhase.AVAILABLE,
+                UpdatePhase.FAILED -> {
+                    if (startUpdateDownload(activity, updateInfo.downloadUrl, state)) {
+                        renderDownloadingState(activity, state, 0, isIndeterminate = true)
+                    } else {
+                        Toast.makeText(activity, R.string.update_link_unavailable, Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                UpdatePhase.PERMISSION_REQUIRED,
+                UpdatePhase.READY_TO_INSTALL -> {
+                    installDownloadedApk(activity, state)
+                }
+
+                UpdatePhase.DOWNLOADING,
+                UpdatePhase.INSTALLING -> Unit
+            }
         }
 
-        val dialog = dialogBuilder.create()
-        activeDialog = dialog
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
-                if (startUpdateDownload(activity, updateInfo.downloadUrl)) {
-                    dialog.dismiss()
-                } else {
-                    Toast.makeText(activity, R.string.update_link_unavailable, Toast.LENGTH_LONG).show()
-                }
-            }
-
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setOnClickListener {
+        if (updateInfo.forceUpdate) {
+            state.secondaryButton.visibility = View.GONE
+        } else {
+            state.secondaryButton.setOnClickListener {
                 preferences.edit {
                     putLong(UPDATE_PREF_KEY_DISMISSED_VERSION, updateInfo.latestVersionCode)
                 }
                 dialog.dismiss()
             }
         }
+
         dialog.setOnDismissListener {
+            stopProgressUpdates()
             activeDialog = null
+            dialogState = null
             isCheckInProgress = false
         }
+        dialog.setCanceledOnTouchOutside(false)
         dialog.show()
     }
 
-    private fun startUpdateDownload(activity: AppCompatActivity, url: String): Boolean {
+    private fun renderAvailableState(
+        context: Context,
+        state: UpdateDialogState,
+        updateInfo: AppUpdateInfo,
+    ) {
+        state.phase = UpdatePhase.AVAILABLE
+        state.statusView.text = context.getString(R.string.update_status_ready, updateInfo.latestVersionName)
+        state.progressBar.visibility = View.GONE
+        state.progressBar.isIndeterminate = false
+        state.progressBar.progress = 0
+        state.primaryButton.isEnabled = true
+        state.primaryButton.text = context.getString(R.string.update_action_now)
+        if (state.secondaryButton.visibility == View.VISIBLE) {
+            state.secondaryButton.text = context.getString(R.string.update_action_later)
+            state.secondaryButton.isEnabled = true
+        }
+    }
+
+    private fun renderDownloadingState(
+        context: Context,
+        state: UpdateDialogState,
+        progressPercent: Int,
+        isIndeterminate: Boolean,
+    ) {
+        state.phase = UpdatePhase.DOWNLOADING
+        state.progressBar.visibility = View.VISIBLE
+        state.progressBar.isIndeterminate = isIndeterminate
+        if (!isIndeterminate) {
+            state.progressBar.progress = progressPercent
+            state.statusView.text = context.getString(R.string.update_status_downloading_percent, progressPercent)
+        } else {
+            state.statusView.text = context.getString(R.string.update_status_preparing_download)
+        }
+        state.primaryButton.isEnabled = false
+        state.primaryButton.text = context.getString(R.string.update_action_downloading)
+        state.secondaryButton.isEnabled = false
+    }
+
+    private fun renderReadyToInstallState(context: Context, state: UpdateDialogState) {
+        state.phase = UpdatePhase.READY_TO_INSTALL
+        state.progressBar.visibility = View.VISIBLE
+        state.progressBar.isIndeterminate = false
+        state.progressBar.progress = 100
+        state.statusView.text = context.getString(R.string.update_status_ready_to_install)
+        state.primaryButton.isEnabled = true
+        state.primaryButton.text = context.getString(R.string.update_action_install)
+        state.secondaryButton.visibility = View.GONE
+    }
+
+    private fun renderInstallingState(context: Context, state: UpdateDialogState) {
+        state.phase = UpdatePhase.INSTALLING
+        state.progressBar.visibility = View.VISIBLE
+        state.progressBar.isIndeterminate = true
+        state.statusView.text = context.getString(R.string.update_status_installing)
+        state.primaryButton.isEnabled = false
+        state.primaryButton.text = context.getString(R.string.update_action_installing)
+        state.secondaryButton.visibility = View.GONE
+    }
+
+    private fun renderFailedState(context: Context, state: UpdateDialogState) {
+        state.phase = UpdatePhase.FAILED
+        state.progressBar.visibility = View.GONE
+        state.statusView.text = context.getString(R.string.update_download_failed)
+        state.primaryButton.isEnabled = true
+        state.primaryButton.text = context.getString(R.string.update_action_retry)
+        state.secondaryButton.isEnabled = true
+    }
+
+    private fun renderPermissionRequiredState(context: Context, state: UpdateDialogState) {
+        state.phase = UpdatePhase.PERMISSION_REQUIRED
+        state.progressBar.visibility = View.GONE
+        state.statusView.text = context.getString(R.string.update_allow_install_permission)
+        state.primaryButton.isEnabled = true
+        state.primaryButton.text = context.getString(R.string.update_action_install)
+        state.secondaryButton.visibility = View.GONE
+    }
+
+    private fun startUpdateDownload(
+        activity: AppCompatActivity,
+        url: String,
+        state: UpdateDialogState,
+    ): Boolean {
         val downloadUri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
         val downloadManager = activity.getSystemService(DownloadManager::class.java) ?: return false
 
         return runCatching {
-            registerDownloadReceiver(activity.applicationContext, downloadManager)
+            stopProgressUpdates()
+            downloadedApkUri = null
 
             val request = DownloadManager.Request(downloadUri)
                 .setTitle(activity.getString(R.string.update_download_title))
@@ -174,94 +309,126 @@ object AppUpdateChecker {
                     UPDATE_APK_FILE_NAME,
                 )
 
+            activeDownloadManager = downloadManager
             activeDownloadId = downloadManager.enqueue(request)
             Toast.makeText(activity, R.string.update_download_started, Toast.LENGTH_LONG).show()
+            startProgressUpdates(activity.applicationContext, state)
             true
         }.getOrElse {
-            openExternalUpdateUrl(activity, downloadUri)
-        }
-    }
-
-    private fun openExternalUpdateUrl(activity: AppCompatActivity, updateUri: Uri): Boolean {
-        val browserIntent = Intent(Intent.ACTION_VIEW, updateUri).apply {
-            addCategory(Intent.CATEGORY_BROWSABLE)
-        }
-        return try {
-            activity.startActivity(browserIntent)
-            true
-        } catch (_: ActivityNotFoundException) {
             false
         }
     }
 
-    private fun registerDownloadReceiver(context: Context, downloadManager: DownloadManager) {
-        if (downloadReceiver != null) {
-            return
-        }
-
-        downloadReceiver = object : BroadcastReceiver() {
-            override fun onReceive(receiverContext: Context, intent: Intent) {
-                if (intent.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+    private fun startProgressUpdates(context: Context, state: UpdateDialogState) {
+        stopProgressUpdates()
+        val runnable = object : Runnable {
+            override fun run() {
+                val downloadManager = activeDownloadManager ?: return
+                val downloadId = activeDownloadId
+                if (downloadId < 0L) {
                     return
                 }
 
-                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
-                if (downloadId != activeDownloadId) {
-                    return
-                }
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                downloadManager.query(query).use { cursor ->
+                    if (!cursor.moveToFirst()) {
+                        renderFailedState(context, state)
+                        activeDownloadId = -1L
+                        return
+                    }
 
-                activeDownloadId = -1L
-                val apkUri = downloadManager.getUriForDownloadedFile(downloadId)
-                if (apkUri == null) {
-                    Toast.makeText(receiverContext, R.string.update_download_failed, Toast.LENGTH_LONG).show()
-                    unregisterDownloadReceiver(receiverContext)
-                    return
-                }
+                    val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    when (status) {
+                        DownloadManager.STATUS_PENDING,
+                        DownloadManager.STATUS_PAUSED,
+                        DownloadManager.STATUS_RUNNING -> {
+                            val downloadedBytes = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                            val totalBytes = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                            if (totalBytes > 0L) {
+                                val progressPercent = ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100)
+                                renderDownloadingState(context, state, progressPercent, isIndeterminate = false)
+                            } else {
+                                renderDownloadingState(context, state, 0, isIndeterminate = true)
+                            }
+                            mainHandler.postDelayed(this, DOWNLOAD_PROGRESS_INTERVAL_MS)
+                        }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    !receiverContext.packageManager.canRequestPackageInstalls()
-                ) {
-                    val settingsIntent = Intent(
-                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        Uri.parse("package:${receiverContext.packageName}"),
-                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    receiverContext.startActivity(settingsIntent)
-                    Toast.makeText(receiverContext, R.string.update_allow_install_permission, Toast.LENGTH_LONG).show()
-                    unregisterDownloadReceiver(receiverContext)
-                    return
-                }
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            downloadedApkUri = downloadManager.getUriForDownloadedFile(downloadId)
+                            activeDownloadId = -1L
+                            renderReadyToInstallState(context, state)
+                        }
 
-                val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(apkUri, "application/vnd.android.package-archive")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-
-                try {
-                    receiverContext.startActivity(installIntent)
-                } catch (_: ActivityNotFoundException) {
-                    Toast.makeText(receiverContext, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
-                } finally {
-                    unregisterDownloadReceiver(receiverContext)
+                        DownloadManager.STATUS_FAILED -> {
+                            activeDownloadId = -1L
+                            renderFailedState(context, state)
+                        }
+                    }
                 }
             }
         }
-
-        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(downloadReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            context.registerReceiver(downloadReceiver, filter)
-        }
+        progressRunnable = runnable
+        mainHandler.post(runnable)
     }
 
-    private fun unregisterDownloadReceiver(context: Context) {
-        val receiver = downloadReceiver ?: return
-        runCatching {
-            context.unregisterReceiver(receiver)
+    private fun stopProgressUpdates() {
+        progressRunnable?.let(mainHandler::removeCallbacks)
+        progressRunnable = null
+    }
+
+    private fun installDownloadedApk(activity: AppCompatActivity, state: UpdateDialogState) {
+        val apkUri = downloadedApkUri
+        if (apkUri == null) {
+            renderFailedState(activity, state)
+            return
         }
-        downloadReceiver = null
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !activity.packageManager.canRequestPackageInstalls()
+        ) {
+            val settingsIntent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${activity.packageName}"),
+            )
+            activity.startActivity(settingsIntent)
+            renderPermissionRequiredState(activity, state)
+            return
+        }
+
+        renderInstallingState(activity, state)
+
+        runCatching {
+            val packageInstaller = activity.packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+                setAppPackageName(activity.packageName)
+            }
+            val sessionId = packageInstaller.createSession(params)
+            packageInstaller.openSession(sessionId).use { session ->
+                activity.contentResolver.openInputStream(apkUri).use { inputStream ->
+                    requireNotNull(inputStream)
+                    session.openWrite("app-update", 0, -1).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                        session.fsync(outputStream)
+                    }
+                }
+
+                val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+                val intent = Intent(activity, UpdateInstallReceiver::class.java).apply {
+                    action = UpdateInstallReceiver.ACTION_INSTALL_STATUS
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    activity,
+                    sessionId,
+                    intent,
+                    flags,
+                )
+                session.commit(pendingIntent.intentSender)
+            }
+        }.onFailure {
+            renderReadyToInstallState(activity, state)
+            Toast.makeText(activity, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun getCurrentVersionCode(activity: AppCompatActivity): Long {
@@ -277,5 +444,24 @@ object AppUpdateChecker {
     } else {
         @Suppress("DEPRECATION")
         activity.packageManager.getPackageInfo(activity.packageName, 0)
+    }
+
+    private data class UpdateDialogState(
+        val titleView: TextView,
+        val messageView: TextView,
+        val statusView: TextView,
+        val progressBar: LinearProgressIndicator,
+        val primaryButton: MaterialButton,
+        val secondaryButton: MaterialButton,
+        var phase: UpdatePhase = UpdatePhase.AVAILABLE,
+    )
+
+    private enum class UpdatePhase {
+        AVAILABLE,
+        DOWNLOADING,
+        READY_TO_INSTALL,
+        INSTALLING,
+        FAILED,
+        PERMISSION_REQUIRED,
     }
 }

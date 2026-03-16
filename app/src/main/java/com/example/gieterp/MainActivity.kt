@@ -8,6 +8,7 @@ import android.text.method.PasswordTransformationMethod
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var button: ImageButton
     private lateinit var rollnoInput: EditText
+    private lateinit var versionText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +41,8 @@ class MainActivity : AppCompatActivity() {
 
         button = findViewById(R.id.submit)
         rollnoInput = findViewById(R.id.rollno)
+        versionText = findViewById(R.id.versionText)
+        versionText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
 
         button.setOnClickListener {
             val rollNo = rollnoInput.text.toString().trim()

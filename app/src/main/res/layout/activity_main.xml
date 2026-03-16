@@ -33,6 +33,14 @@
             android:letterSpacing="0.02" />
 
         <TextView
+            android:id="@+id/versionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            style="@style/TextAppearance.GietErp.BodySecondary"
+            android:text="@string/app_version_placeholder" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

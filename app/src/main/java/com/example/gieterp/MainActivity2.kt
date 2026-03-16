@@ -24,6 +24,7 @@ class MainActivity2 : AppCompatActivity() {
 
     private lateinit var loadingOverlay: View
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var appTitleText: TextView
     private lateinit var rollnoView: TextView
     private lateinit var logoutButton: Button
     private lateinit var getAttendance: ImageButton
@@ -44,6 +45,7 @@ class MainActivity2 : AppCompatActivity() {
 
         loadingOverlay = findViewById(R.id.loadingOverlay)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshDashboard)
+        appTitleText = findViewById(R.id.appTitleText)
         rollnoView = findViewById(R.id.rollno)
         logoutButton = findViewById(R.id.buttonLogout)
         getAttendance = findViewById(R.id.getattendance)
@@ -63,6 +65,7 @@ class MainActivity2 : AppCompatActivity() {
             return
         }
 
+        appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
         activeRollNo = rollNo
         setupSwipeToRefresh()
