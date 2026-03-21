@@ -1,5 +1,6 @@
 package com.example.gieterp
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -84,6 +85,9 @@ class SpecialSearchResultsActivity : AppCompatActivity() {
         studentAdapter = SpecialStudentAdapter(this, emptyList())
         studentListView.adapter = studentAdapter
         studentListView.emptyView = emptyStateText
+        studentListView.setOnItemClickListener { _, _, position, _ ->
+            openStudentDetails(studentAdapter.getItem(position))
+        }
 
         backButton.setOnClickListener { finish() }
     }
@@ -198,6 +202,15 @@ class SpecialSearchResultsActivity : AppCompatActivity() {
 
         studentAdapter.submitList(filteredList)
         resultsCountText.text = getString(R.string.special_results_count, filteredList.size)
+    }
+
+    private fun openStudentDetails(student: SpecialStudent) {
+        val detailIntent = Intent(this, SpecialStudentDetailActivity::class.java).apply {
+            SpecialStudentContract.putStudentExtras(this, student)
+            putExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, semester)
+            putExtra(AppSession.EXTRA_OVERRIDE_MAX_SEMESTER, student.semester.coerceIn(1, 8))
+        }
+        startActivity(detailIntent)
     }
 
     override fun onStop() {

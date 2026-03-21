@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_app_gradient"
+    android:padding="24dp"
+    tools:context=".SpecialStudentDetailActivity">
+
+    <TextView
+        android:id="@+id/detailSubtitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/special_subtitle"
+        android:textColor="@color/accent_secondary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonBack"
+        android:layout_width="wrap_content"
+        android:layout_height="42dp"
+        android:background="@drawable/bg_secondary_button"
+        android:minWidth="0dp"
+        android:paddingHorizontal="14dp"
+        android:text="@string/special_back"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        app:icon="@drawable/ic_back"
+        app:iconGravity="textStart"
+        app:iconPadding="6dp"
+        app:iconSize="16dp"
+        app:iconTint="@color/text_primary"
+        app:layout_constraintBottom_toBottomOf="@id/detailSubtitleText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/detailSubtitleText" />
+
+    <TextView
+        android:id="@+id/detailTitleText"
+        style="@style/TextAppearance.GietErp.HeroTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/special_student_detail_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/detailSubtitleText" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/detailTitleText">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/special_profile_title"
+                    android:textColor="@color/accent_secondary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/studentNameText"
+                    style="@style/TextAppearance.GietErp.ScreenTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    tools:text="Ayush Kumar" />
+
+                <TextView
+                    android:id="@+id/rollNoText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    tools:text="Roll No: 23CSE476" />
+
+                <TextView
+                    android:id="@+id/registrationNoText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    tools:text="Reg No: 220123456" />
+
+                <TextView
+                    android:id="@+id/programBranchText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    tools:text="Program: BTech • Branch: CSE" />
+
+                <TextView
+                    android:id="@+id/semesterSectionText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    tools:text="Semester: 6 • Section: A" />
+
+                <TextView
+                    android:id="@+id/contactText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    tools:text="Contact: 9999999999" />
+
+                <TextView
+                    android:id="@+id/hostelInfoText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    tools:text="Hostel: Day Scholar" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/special_academic_actions_title"
+                    android:textColor="@color/accent_secondary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/special_academic_actions_description"
+                    android:textColor="@color/text_secondary" />
+
+                <Spinner
+                    android:id="@+id/semesterSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_input_field"
+                    android:paddingHorizontal="12dp"
+                    android:popupBackground="@color/surface_card_strong" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openAttendanceButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_primary_button"
+                    android:minHeight="52dp"
+                    android:text="@string/special_view_attendance_report"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openInternalMarksButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_secondary_button"
+                    android:minHeight="52dp"
+                    android:text="@string/special_view_internal_marks"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openSemesterResultsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_secondary_button"
+                    android:minHeight="52dp"
+                    android:text="@string/special_view_semester_results"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

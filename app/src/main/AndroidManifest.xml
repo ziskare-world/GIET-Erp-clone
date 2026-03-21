@@ -30,6 +30,9 @@
             </intent-filter>
         </service>
         <activity
+            android:name=".SpecialStudentDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".SpecialSearchResultsActivity"
             android:exported="false" />
         <activity

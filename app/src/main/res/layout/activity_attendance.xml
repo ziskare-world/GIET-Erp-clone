@@ -11,12 +11,27 @@
 
     <TextView
         android:id="@+id/titleText"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         style="@style/TextAppearance.GietErp.ScreenTitle"
         android:text="@string/attendance_report1"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/studentIdentityText"
+        style="@style/TextAppearance.GietErp.BodySecondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleText"
+        tools:text="Student: Ayush Kumar (23CSE476)" />
 
     <LinearLayout
         android:id="@+id/contentCard"
@@ -29,7 +44,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleText">
+        app:layout_constraintTop_toBottomOf="@id/studentIdentityText">
 
         <HorizontalScrollView
             android:id="@+id/hScroll"
@@ -52,5 +67,47 @@
             </ScrollView>
         </HorizontalScrollView>
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/loading_scrim"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/contentCard"
+        app:layout_constraintEnd_toEndOf="@id/contentCard"
+        app:layout_constraintStart_toStartOf="@id/contentCard"
+        app:layout_constraintTop_toTopOf="@id/contentCard">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_loader_card"
+            android:elevation="8dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="20dp">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/accent_secondary"
+                app:trackColor="@color/stroke_soft"
+                app:trackThickness="4dp" />
+
+            <TextView
+                style="@style/TextAppearance.GietErp.BodySecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/loading_dashboard_data"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

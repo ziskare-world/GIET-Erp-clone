@@ -8,6 +8,7 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TableLayout
 import android.widget.TableRow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -24,12 +25,15 @@ class Semester : AppCompatActivity() {
 
     private lateinit var tableLayout: TableLayout
     private lateinit var semesterSpinner: Spinner
+    private lateinit var studentIdentityText: TextView
     private lateinit var loadingOverlay: View
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var scrollView: ScrollView
 
     private var selectedSemester = 1
+    private var maxSemester = 1
     private var rollNo: String? = null
+    private var isOverrideStudent = false
     private var ignoreInitialSelection = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,21 +45,46 @@ class Semester : AppCompatActivity() {
 
         tableLayout = findViewById(R.id.tableLayout)
         semesterSpinner = findViewById(R.id.semesterSpinner)
+        studentIdentityText = findViewById(R.id.studentIdentityText)
         loadingOverlay = findViewById(R.id.loadingOverlay)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshSemester)
         scrollView = findViewById(R.id.scrollView)
 
-        val sharedPreferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
-        rollNo = sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
+        val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
+        val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
 
-        if (rollNo.isNullOrBlank()) {
-            Toast.makeText(this, R.string.roll_number_missing, Toast.LENGTH_LONG).show()
-            finish()
-            return
+        if (!overrideRollNo.isNullOrBlank()) {
+            isOverrideStudent = true
+            rollNo = overrideRollNo
+            maxSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_MAX_SEMESTER,
+                StudentAnalytics.calculateCurrentSemester(overrideRollNo),
+            ).coerceIn(1, 8)
+            selectedSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
+                maxSemester,
+            ).coerceIn(1, maxSemester)
+            studentIdentityText.text = getString(
+                R.string.special_student_identity_format,
+                overrideName?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
+                overrideRollNo,
+            )
+            studentIdentityText.visibility = View.VISIBLE
+        } else {
+            val sharedPreferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            rollNo = sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
+
+            if (rollNo.isNullOrBlank()) {
+                Toast.makeText(this, R.string.roll_number_missing, Toast.LENGTH_LONG).show()
+                finish()
+                return
+            }
+
+            selectedSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
+            maxSemester = selectedSemester
         }
 
-        selectedSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
-        setupSpinner(selectedSemester)
+        setupSpinner(maxSemester, selectedSemester)
         setupSwipeToRefresh()
         loadSemesterData(selectedSemester)
     }
@@ -103,8 +132,10 @@ class Semester : AppCompatActivity() {
                     }
 
                     if (studentId > 0) {
-                        getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
-                            putInt(AppSession.KEY_STUDENT_ID, studentId)
+                        if (!isOverrideStudent) {
+                            getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
+                                putInt(AppSession.KEY_STUDENT_ID, studentId)
+                            }
                         }
                         getSemesterGrades(semester, studentId, fromSwipeRefresh)
                     } else {
@@ -203,15 +234,15 @@ class Semester : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun setupSpinner(current: Int) {
+    private fun setupSpinner(maxAvailableSemester: Int, initialSemester: Int) {
         val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
-            (1..8).map { getString(R.string.semester_number_format, it) },
+            (1..maxAvailableSemester).map { getString(R.string.semester_number_format, it) },
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         semesterSpinner.adapter = adapter
-        semesterSpinner.setSelection(current - 1)
+        semesterSpinner.setSelection(initialSemester - 1)
 
         semesterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {

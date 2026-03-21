@@ -57,4 +57,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
+    <TextView
+        style="@style/TextAppearance.GietErp.BodySecondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/special_tap_to_view_details"
+        android:textColor="@color/accent_secondary"
+        android:textStyle="bold" />
+
 </LinearLayout>

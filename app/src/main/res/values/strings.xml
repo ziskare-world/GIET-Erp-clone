@@ -83,6 +83,16 @@
     <string name="special_semester_option">Semester %1$d</string>
     <string name="special_open_results">Open Results</string>
     <string name="special_results_title">Student Results</string>
+    <string name="special_student_detail_title">Student Details</string>
+    <string name="special_profile_title">Student Profile</string>
+    <string name="special_academic_actions_title">Academic Reports</string>
+    <string name="special_academic_actions_description">Choose a semester, then open the attendance, internal marks, or semester result screen for this student.</string>
+    <string name="special_view_attendance_report">Open Attendance Report</string>
+    <string name="special_view_internal_marks">Open Internal Assessments</string>
+    <string name="special_view_semester_results">Open Semester Results</string>
+    <string name="special_student_details_missing">Student details are missing.</string>
+    <string name="special_tap_to_view_details">Tap to view student details</string>
+    <string name="special_student_identity_format">Student: %1$s (%2$s)</string>
     <string name="special_results_branch">Branch: %1$s</string>
     <string name="special_results_semester">Semester: %1$d</string>
     <string name="special_back">Back</string>

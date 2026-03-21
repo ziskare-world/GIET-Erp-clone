@@ -10,6 +10,7 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TableLayout
 import android.widget.TableRow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -25,9 +26,11 @@ class SemesterMark : AppCompatActivity() {
 
     private lateinit var tableLayout: TableLayout
     private lateinit var semesterSpinner: Spinner
+    private lateinit var studentIdentityText: TextView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var verticalScrollView: ScrollView
     private var currentSemester = 1
+    private var maxSemester = 1
     private var rollNo: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,20 +42,44 @@ class SemesterMark : AppCompatActivity() {
 
         tableLayout = findViewById(R.id.tableLayout)
         semesterSpinner = findViewById(R.id.semesterSpinner)
+        studentIdentityText = findViewById(R.id.studentIdentityText)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshSemesterMark)
         verticalScrollView = findViewById(R.id.vScrollSemesterMark)
 
-        val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
-        rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
+        val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
+        val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
 
-        if (rollNo.isNullOrBlank()) {
-            Toast.makeText(this, R.string.roll_number_not_found_local, Toast.LENGTH_LONG).show()
-            finish()
-            return
+        if (!overrideRollNo.isNullOrBlank()) {
+            rollNo = overrideRollNo
+            maxSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_MAX_SEMESTER,
+                StudentAnalytics.calculateCurrentSemester(overrideRollNo),
+            ).coerceIn(1, 8)
+            currentSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
+                maxSemester,
+            ).coerceIn(1, maxSemester)
+            studentIdentityText.text = getString(
+                R.string.special_student_identity_format,
+                overrideName?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
+                overrideRollNo,
+            )
+            studentIdentityText.visibility = View.VISIBLE
+        } else {
+            val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
+
+            if (rollNo.isNullOrBlank()) {
+                Toast.makeText(this, R.string.roll_number_not_found_local, Toast.LENGTH_LONG).show()
+                finish()
+                return
+            }
+
+            currentSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
+            maxSemester = currentSemester
         }
 
-        currentSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
-        setupSemesterSpinner(currentSemester)
+        setupSemesterSpinner(maxSemester, currentSemester)
         setupSwipeToRefresh()
         getInternalMarks(rollNo!!, currentSemester)
     }
@@ -76,12 +103,12 @@ class SemesterMark : AppCompatActivity() {
         }
     }
 
-    private fun setupSemesterSpinner(maxSemester: Int) {
-        val semesterList = (1..maxSemester).map { getString(R.string.semester_number_format, it) }
+    private fun setupSemesterSpinner(maxAvailableSemester: Int, initialSemester: Int) {
+        val semesterList = (1..maxAvailableSemester).map { getString(R.string.semester_number_format, it) }
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, semesterList)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         semesterSpinner.adapter = adapter
-        semesterSpinner.setSelection(maxSemester - 1)
+        semesterSpinner.setSelection(initialSemester - 1)
 
         semesterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
