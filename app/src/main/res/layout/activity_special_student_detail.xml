@@ -162,6 +162,19 @@
                     android:text="@string/special_academic_actions_description"
                     android:textColor="@color/text_secondary" />
 
+                <TextView
+                    android:id="@+id/restrictionText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_stat_card"
+                    android:padding="12dp"
+                    android:textColor="@color/danger"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="Access to ERP details is currently restricted for this roll number." />
+
                 <Spinner
                     android:id="@+id/semesterSpinner"
                     android:layout_width="match_parent"

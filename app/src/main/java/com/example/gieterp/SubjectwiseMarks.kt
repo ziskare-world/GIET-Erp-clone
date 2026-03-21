@@ -31,7 +31,7 @@ class SubjectwiseMarks : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_subjectwise_marks)
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         tableLayout = findViewById(R.id.tableLayout)
         examTitleTextView = findViewById(R.id.examIdTextView)

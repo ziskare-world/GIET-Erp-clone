@@ -24,13 +24,16 @@ class AttendanceActivity : AppCompatActivity() {
     private lateinit var tableLayout: TableLayout
     private lateinit var studentIdentityText: TextView
     private lateinit var loadingOverlay: View
+    private var activeRollNo: String? = null
+    private var pendingResponse: String? = null
+    private var pendingSemester: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_attendance)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         tableLayout = findViewById(R.id.tableLayout)
         studentIdentityText = findViewById(R.id.studentIdentityText)
@@ -39,6 +42,10 @@ class AttendanceActivity : AppCompatActivity() {
         val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
         val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
         val overrideSemester = intent.getIntExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, -1)
+        val sharedPreferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        activeRollNo = overrideRollNo ?: sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
+        pendingResponse = intent.getStringExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE)
+        pendingSemester = overrideSemester
 
         if (!overrideRollNo.isNullOrBlank()) {
             studentIdentityText.text = getString(
@@ -49,14 +56,31 @@ class AttendanceActivity : AppCompatActivity() {
             studentIdentityText.visibility = View.VISIBLE
         }
 
-        val response = intent.getStringExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE)
-        when {
-            !response.isNullOrEmpty() -> parseAttendance(response)
-            !overrideRollNo.isNullOrBlank() && overrideSemester > 0 -> fetchAttendance(overrideRollNo, overrideSemester)
-            else -> {
-                Toast.makeText(this, R.string.attendance_data_missing, Toast.LENGTH_LONG).show()
+        val rollNo = activeRollNo
+        if (rollNo.isNullOrBlank()) {
+            Toast.makeText(this, R.string.roll_number_missing, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        RemoteControlService.checkRollAccess(this, rollNo) { accessInfo ->
+            if (!accessInfo.canViewDetails) {
+                Toast.makeText(
+                    this,
+                    accessInfo.message.ifBlank { getString(R.string.roll_restricted_default_message) },
+                    Toast.LENGTH_LONG,
+                ).show()
                 finish()
-                return
+                return@checkRollAccess
+            }
+
+            when {
+                !pendingResponse.isNullOrEmpty() -> parseAttendance(pendingResponse!!)
+                !overrideRollNo.isNullOrBlank() && pendingSemester > 0 -> fetchAttendance(overrideRollNo, pendingSemester)
+                else -> {
+                    Toast.makeText(this, R.string.attendance_data_missing, Toast.LENGTH_LONG).show()
+                    finish()
+                }
             }
         }
     }

@@ -158,6 +158,19 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/restrictionMessageText"
+                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_stat_card"
+                    android:padding="14dp"
+                    android:textColor="@color/danger"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="Access to ERP details is currently restricted for this roll number." />
+
                 <LinearLayout
                     android:id="@+id/actionsColumn"
                     android:layout_width="match_parent"

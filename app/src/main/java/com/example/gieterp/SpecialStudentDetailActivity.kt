@@ -26,6 +26,7 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
     private lateinit var attendanceButton: Button
     private lateinit var internalMarksButton: Button
     private lateinit var semesterResultsButton: Button
+    private lateinit var restrictionText: TextView
 
     private var selectedSemester = 1
     private var maxSemester = 1
@@ -35,7 +36,7 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_special_student_detail)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         student = SpecialStudentContract.readStudent(intent) ?: run {
             Toast.makeText(this, R.string.special_student_details_missing, Toast.LENGTH_LONG).show()
@@ -66,6 +67,7 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
         attendanceButton = findViewById(R.id.openAttendanceButton)
         internalMarksButton = findViewById(R.id.openInternalMarksButton)
         semesterResultsButton = findViewById(R.id.openSemesterResultsButton)
+        restrictionText = findViewById(R.id.restrictionText)
 
         backButton.setOnClickListener { finish() }
     }
@@ -106,15 +108,55 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
 
     private fun setupActions() {
         attendanceButton.setOnClickListener {
-            startActivity(reportIntent(AttendanceActivity::class.java))
+            openReportIfAllowed(AttendanceActivity::class.java)
         }
 
         internalMarksButton.setOnClickListener {
-            startActivity(reportIntent(SemesterMark::class.java))
+            openReportIfAllowed(SemesterMark::class.java)
         }
 
         semesterResultsButton.setOnClickListener {
-            startActivity(reportIntent(Semester::class.java))
+            openReportIfAllowed(Semester::class.java)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        validateRollAccess()
+    }
+
+    private fun validateRollAccess() {
+        RemoteControlService.checkRollAccess(this, student.rollNo) { accessInfo ->
+            val enabled = accessInfo.canViewDetails
+            setActionButtonsEnabled(enabled)
+            if (enabled) {
+                restrictionText.visibility = View.GONE
+            } else {
+                restrictionText.text = accessInfo.message
+                restrictionText.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun openReportIfAllowed(target: Class<*>) {
+        RemoteControlService.checkRollAccess(this, student.rollNo) { accessInfo ->
+            if (!accessInfo.canViewDetails) {
+                restrictionText.text = accessInfo.message
+                restrictionText.visibility = View.VISIBLE
+                setActionButtonsEnabled(false)
+                Toast.makeText(this, accessInfo.message, Toast.LENGTH_LONG).show()
+                return@checkRollAccess
+            }
+            setActionButtonsEnabled(true)
+            restrictionText.visibility = View.GONE
+            startActivity(reportIntent(target))
+        }
+    }
+
+    private fun setActionButtonsEnabled(enabled: Boolean) {
+        listOf(attendanceButton, internalMarksButton, semesterResultsButton).forEach { button ->
+            button.isEnabled = enabled
+            button.alpha = if (enabled) 1f else 0.5f
         }
     }
 

@@ -31,3 +31,13 @@ Configured IDs:
 - App ID: `ca-app-pub-5619760951459090~8317918493`
 - Debug banner unit: Google adaptive banner test unit
 - Release banner unit: `ca-app-pub-5619760951459090/1399957246`
+
+## App control and admin registry
+
+The app now supports:
+
+- a GitHub-hosted app close switch via `release-assets/app-control.json`
+- Google Sheets + Apps Script install tracking and roll access control
+- a companion admin app in `../GietErpAdmin`
+
+Apps Script template and setup steps are in `admin-control/SETUP.md`.

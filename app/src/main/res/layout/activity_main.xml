@@ -92,6 +92,7 @@
                 android:textAllCaps="true"
                 android:letterSpacing="0.03" />
         </FrameLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

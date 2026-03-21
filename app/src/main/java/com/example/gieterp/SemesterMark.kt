@@ -38,7 +38,7 @@ class SemesterMark : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_semester_mark)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         tableLayout = findViewById(R.id.tableLayout)
         semesterSpinner = findViewById(R.id.semesterSpinner)
@@ -79,9 +79,21 @@ class SemesterMark : AppCompatActivity() {
             maxSemester = currentSemester
         }
 
-        setupSemesterSpinner(maxSemester, currentSemester)
-        setupSwipeToRefresh()
-        getInternalMarks(rollNo!!, currentSemester)
+        RemoteControlService.checkRollAccess(this, rollNo!!) { accessInfo ->
+            if (!accessInfo.canViewDetails) {
+                Toast.makeText(
+                    this,
+                    accessInfo.message.ifBlank { getString(R.string.roll_restricted_default_message) },
+                    Toast.LENGTH_LONG,
+                ).show()
+                finish()
+                return@checkRollAccess
+            }
+
+            setupSemesterSpinner(maxSemester, currentSemester)
+            setupSwipeToRefresh()
+            getInternalMarks(rollNo!!, currentSemester)
+        }
     }
 
     private fun setupSwipeToRefresh() {

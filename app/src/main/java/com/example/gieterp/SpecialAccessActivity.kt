@@ -27,7 +27,7 @@ class SpecialAccessActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_special_access)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         closeButton = findViewById(R.id.buttonClose)
         branchSpinner = findViewById(R.id.branchSpinner)

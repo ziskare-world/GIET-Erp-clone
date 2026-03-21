@@ -8,6 +8,12 @@ object AppSession {
     const val KEY_PUSH_TOKEN_ROLL_NO = "pushTokenRollNo"
     const val KEY_LAST_ATTENDANCE_EVENT_ID = "lastAttendanceEventId"
     const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "notificationsPermissionRequested"
+    const val KEY_INSTALL_ID = "installId"
+    const val KEY_INSTALL_REGISTERED = "installRegistered"
+    const val KEY_APP_CONTROL_ENABLED = "appControlEnabled"
+    const val KEY_APP_CONTROL_MESSAGE = "appControlMessage"
+    const val KEY_APP_CONTROL_UPDATED_AT = "appControlUpdatedAt"
+    const val KEY_APP_CONTROL_UPDATED_BY = "appControlUpdatedBy"
 
     const val EXTRA_ATTENDANCE_RESPONSE = "response"
     const val EXTRA_EXAM_ID = "examId"

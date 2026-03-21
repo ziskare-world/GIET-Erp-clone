@@ -34,13 +34,16 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var attendancePercentText: TextView
     private lateinit var bunkedClassText: TextView
     private lateinit var semesterButton: ImageButton
+    private lateinit var restrictionMessageText: TextView
     private lateinit var dashboardAdContainer: FrameLayout
     private lateinit var privacyChoicesText: TextView
     private lateinit var bannerController: DashboardBannerAdController
+    private lateinit var appControlMonitor: AppControlMonitor
 
     private var lastAttendanceResponse: String? = null
     private var activeRollNo: String? = null
     private var shouldOpenAttendanceAfterRefresh = false
+    private var isRollRestricted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +51,7 @@ class MainActivity2 : AppCompatActivity() {
         setContentView(R.layout.activity_main2)
         AttendancePushTokenSync.requestNotificationPermissionIfNeeded(this)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         loadingOverlay = findViewById(R.id.loadingOverlay)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshDashboard)
@@ -60,9 +63,11 @@ class MainActivity2 : AppCompatActivity() {
         attendancePercentText = findViewById(R.id.attendancePercentText)
         bunkedClassText = findViewById(R.id.bunkedClassText)
         semesterButton = findViewById(R.id.getSemester)
+        restrictionMessageText = findViewById(R.id.restrictionMessageText)
         dashboardAdContainer = findViewById(R.id.dashboardAdContainer)
         privacyChoicesText = findViewById(R.id.privacyChoicesText)
         bannerController = DashboardBannerAdController(this, dashboardAdContainer)
+        appControlMonitor = AppControlMonitor(this)
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
@@ -83,8 +88,6 @@ class MainActivity2 : AppCompatActivity() {
         shouldOpenAttendanceAfterRefresh = AttendanceNotificationIntents.shouldOpenAttendance(intent)
         setupSwipeToRefresh()
         setupAdsFooter()
-        AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
-        fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
 
         logoutButton.setOnClickListener {
             AttendancePushTokenSync.unregisterCurrentToken(applicationContext, rollNo)
@@ -97,6 +100,10 @@ class MainActivity2 : AppCompatActivity() {
         }
 
         getAttendance.setOnClickListener {
+            if (isRollRestricted) {
+                Toast.makeText(this, R.string.roll_restricted_default_message, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val response = lastAttendanceResponse
             if (response.isNullOrEmpty()) {
                 Toast.makeText(this, getString(R.string.attendance_loading_wait), Toast.LENGTH_SHORT).show()
@@ -106,26 +113,52 @@ class MainActivity2 : AppCompatActivity() {
         }
 
         getSemesterMark.setOnClickListener {
+            if (isRollRestricted) {
+                Toast.makeText(this, R.string.roll_restricted_default_message, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             startActivity(Intent(this, SemesterMark::class.java))
         }
 
         semesterButton.setOnClickListener {
+            if (isRollRestricted) {
+                Toast.makeText(this, R.string.roll_restricted_default_message, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             startActivity(Intent(this, Semester::class.java))
         }
     }
 
     override fun onResume() {
         super.onResume()
-        AppUpdateChecker.checkForUpdates(this)
-        if (adsConsentManager.canRequestAds) {
-            bannerController.loadBannerIfNeeded()
+        AppControlChecker.checkAccess(this) {
+            val rollNo = activeRollNo
+            if (!rollNo.isNullOrBlank()) {
+                AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
+                RemoteControlService.heartbeat(applicationContext, rollNo)
+                refreshDashboardAccessAndData()
+            }
+            AppUpdateChecker.checkForUpdates(this)
+            if (adsConsentManager.canRequestAds) {
+                bannerController.loadBannerIfNeeded()
+            }
+            bannerController.onResume()
         }
-        bannerController.onResume()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        appControlMonitor.start()
     }
 
     override fun onPause() {
         bannerController.onPause()
         super.onPause()
+    }
+
+    override fun onStop() {
+        appControlMonitor.stop()
+        super.onStop()
     }
 
     override fun onDestroy() {
@@ -138,10 +171,7 @@ class MainActivity2 : AppCompatActivity() {
         setIntent(intent)
         if (AttendanceNotificationIntents.shouldOpenAttendance(intent)) {
             shouldOpenAttendanceAfterRefresh = true
-            val rollNo = activeRollNo
-            if (!rollNo.isNullOrBlank()) {
-                fetchAttendance(rollNo, StudentAnalytics.calculateCurrentSemester(rollNo))
-            }
+            refreshDashboardAccessAndData()
         }
     }
 
@@ -152,16 +182,7 @@ class MainActivity2 : AppCompatActivity() {
         )
         swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.surface_card)
         swipeRefreshLayout.setOnRefreshListener {
-            val rollNo = activeRollNo
-            if (rollNo.isNullOrBlank()) {
-                swipeRefreshLayout.isRefreshing = false
-                return@setOnRefreshListener
-            }
-            fetchAttendance(
-                rollNo = rollNo,
-                semester = StudentAnalytics.calculateCurrentSemester(rollNo),
-                fromSwipeRefresh = true,
-            )
+            refreshDashboardAccessAndData(fromSwipeRefresh = true)
         }
     }
 
@@ -199,11 +220,47 @@ class MainActivity2 : AppCompatActivity() {
         }
     }
 
-    private fun fetchAttendance(rollNo: String, semester: Int, fromSwipeRefresh: Boolean = false) {
-        val url = "https://gietuerp.in/AttendanceReport/GetAttendanceByRollNo"
+    private fun refreshDashboardAccessAndData(fromSwipeRefresh: Boolean = false) {
+        val rollNo = activeRollNo
+        if (rollNo.isNullOrBlank()) {
+            finishLoadingState()
+            return
+        }
+
         if (fromSwipeRefresh) {
             swipeRefreshLayout.isRefreshing = true
         } else {
+            loadingOverlay.visibility = View.VISIBLE
+        }
+
+        RemoteControlService.checkRollAccess(this, rollNo) { accessInfo ->
+            if (!accessInfo.canViewDetails) {
+                renderRestrictedState(accessInfo.message)
+                finishLoadingState()
+                shouldOpenAttendanceAfterRefresh = false
+                return@checkRollAccess
+            }
+
+            renderAllowedState()
+            fetchAttendance(
+                rollNo = rollNo,
+                semester = StudentAnalytics.calculateCurrentSemester(rollNo),
+                fromSwipeRefresh = fromSwipeRefresh,
+                manageLoadingState = false,
+            )
+        }
+    }
+
+    private fun fetchAttendance(
+        rollNo: String,
+        semester: Int,
+        fromSwipeRefresh: Boolean = false,
+        manageLoadingState: Boolean = true,
+    ) {
+        val url = "https://gietuerp.in/AttendanceReport/GetAttendanceByRollNo"
+        if (manageLoadingState && fromSwipeRefresh) {
+            swipeRefreshLayout.isRefreshing = true
+        } else if (manageLoadingState) {
             loadingOverlay.visibility = View.VISIBLE
         }
 
@@ -252,6 +309,31 @@ class MainActivity2 : AppCompatActivity() {
         val intent = Intent(this, AttendanceActivity::class.java)
         intent.putExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE, response)
         startActivity(intent)
+    }
+
+    private fun renderRestrictedState(message: String) {
+        isRollRestricted = true
+        lastAttendanceResponse = null
+        restrictionMessageText.text = message.ifBlank { getString(R.string.roll_restricted_default_message) }
+        restrictionMessageText.visibility = View.VISIBLE
+        attendancePercentText.text = getString(R.string.value_unknown)
+        bunkedClassText.text = getString(R.string.roll_restricted_status)
+        attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+        bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.danger))
+        setDashboardActionsEnabled(false)
+    }
+
+    private fun renderAllowedState() {
+        isRollRestricted = false
+        restrictionMessageText.visibility = View.GONE
+        setDashboardActionsEnabled(true)
+    }
+
+    private fun setDashboardActionsEnabled(enabled: Boolean) {
+        listOf(getAttendance, getSemesterMark, semesterButton).forEach { button ->
+            button.isEnabled = enabled
+            button.alpha = if (enabled) 1f else 0.45f
+        }
     }
 
     private fun parseAttendance(response: String) {

@@ -51,7 +51,7 @@ class SpecialSearchResultsActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_special_search_results)
 
-        findViewById<View>(R.id.main).applySystemBarsPadding()
+        SystemBarInsets.apply(findViewById(R.id.main))
 
         branchId = intent.getIntExtra(EXTRA_BRANCH_ID, 0)
         semester = intent.getIntExtra(EXTRA_SEMESTER, 0)
@@ -205,12 +205,21 @@ class SpecialSearchResultsActivity : AppCompatActivity() {
     }
 
     private fun openStudentDetails(student: SpecialStudent) {
-        val detailIntent = Intent(this, SpecialStudentDetailActivity::class.java).apply {
-            SpecialStudentContract.putStudentExtras(this, student)
-            putExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, semester)
-            putExtra(AppSession.EXTRA_OVERRIDE_MAX_SEMESTER, student.semester.coerceIn(1, 8))
+        loadingOverlay.visibility = View.VISIBLE
+        RemoteControlService.checkRollAccess(this, student.rollNo) { accessInfo ->
+            loadingOverlay.visibility = View.GONE
+            if (!accessInfo.canViewDetails) {
+                Toast.makeText(this, accessInfo.message, Toast.LENGTH_LONG).show()
+                return@checkRollAccess
+            }
+
+            val detailIntent = Intent(this, SpecialStudentDetailActivity::class.java).apply {
+                SpecialStudentContract.putStudentExtras(this, student)
+                putExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, semester)
+                putExtra(AppSession.EXTRA_OVERRIDE_MAX_SEMESTER, student.semester.coerceIn(1, 8))
+            }
+            startActivity(detailIntent)
         }
-        startActivity(detailIntent)
     }
 
     override fun onStop() {
