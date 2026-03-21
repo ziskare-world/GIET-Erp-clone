@@ -20,6 +20,9 @@ import com.android.volley.toolbox.StringRequest
 import org.json.JSONObject
 
 class MainActivity2 : AppCompatActivity() {
+    companion object {
+        private const val ATTENDANCE_REQUEST_TAG = "dashboard_attendance_request"
+    }
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
     private val adsConsentManager by lazy { AdsConsentManager.getInstance(applicationContext) }
@@ -158,6 +161,8 @@ class MainActivity2 : AppCompatActivity() {
 
     override fun onStop() {
         appControlMonitor.stop()
+        requestQueue.cancelAll(ATTENDANCE_REQUEST_TAG)
+        finishLoadingState()
         super.onStop()
     }
 
@@ -297,6 +302,8 @@ class MainActivity2 : AppCompatActivity() {
             )
         }
 
+        request.tag = ATTENDANCE_REQUEST_TAG
+        requestQueue.cancelAll(ATTENDANCE_REQUEST_TAG)
         requestQueue.add(request)
     }
 

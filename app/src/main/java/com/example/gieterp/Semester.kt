@@ -20,6 +20,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class Semester : AppCompatActivity() {
+    companion object {
+        private const val SEMESTER_REQUEST_TAG = "semester_request"
+    }
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
 
@@ -119,6 +122,7 @@ class Semester : AppCompatActivity() {
 
     private fun loadSemesterData(semester: Int, fromSwipeRefresh: Boolean = false) {
         val currentRollNo = rollNo ?: return
+        requestQueue.cancelAll(SEMESTER_REQUEST_TAG)
         fetchStudentId(semester, currentRollNo, fromSwipeRefresh)
     }
 
@@ -174,6 +178,7 @@ class Semester : AppCompatActivity() {
             )
         }
 
+        request.tag = SEMESTER_REQUEST_TAG
         requestQueue.add(request)
     }
 
@@ -196,6 +201,7 @@ class Semester : AppCompatActivity() {
             },
         )
 
+        request.tag = SEMESTER_REQUEST_TAG
         requestQueue.add(request)
     }
 
@@ -268,5 +274,11 @@ class Semester : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>) = Unit
         }
+    }
+
+    override fun onStop() {
+        requestQueue.cancelAll(SEMESTER_REQUEST_TAG)
+        finishLoading(false)
+        super.onStop()
     }
 }

@@ -7,13 +7,25 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object AppControlChecker {
+    private const val CONTROL_CACHE_WINDOW_MS = 5_000L
+
     private var activeDialog: AlertDialog? = null
     private var isChecking = false
+    private var lastResolvedControl: AppControlInfo? = null
+    private var lastResolvedAt: Long = 0L
+    private val pendingAllowedCallbacks = mutableListOf<() -> Unit>()
 
     fun checkAccess(activity: AppCompatActivity, onAllowed: (() -> Unit)? = null) {
         if (activity.isFinishing || activity.isDestroyed) return
 
         val controlUrl = activity.getString(R.string.app_control_metadata_url).trim()
+        onAllowed?.let { pendingAllowedCallbacks.add(it) }
+
+        if (!isChecking && isRecentResultAvailable()) {
+            applyResolvedState(activity, lastResolvedControl)
+            return
+        }
+
         if (isChecking) return
         isChecking = true
         val cachedInfo = AppControlInfo.fromPreferences(activity)
@@ -32,17 +44,7 @@ object AppControlChecker {
                 scriptInfo = scriptInfo,
                 cachedInfo = cachedInfo,
             )
-
-            if (effectiveControl != null) {
-                AppControlInfo.persist(activity, effectiveControl)
-            }
-
-            if (effectiveControl?.appEnabled != false) {
-                dismissDialogIfVisible()
-                onAllowed?.invoke()
-            } else {
-                showBlockedDialog(activity, effectiveControl)
-            }
+            applyResolvedState(activity, effectiveControl)
         }
 
         RemoteControlService.getAppControl(activity) { remoteInfo ->
@@ -79,6 +81,30 @@ object AppControlChecker {
 
         request.setShouldCache(false)
         VolleyProvider.getRequestQueue(activity).add(request)
+    }
+
+    private fun isRecentResultAvailable(): Boolean {
+        if (lastResolvedAt == 0L) return false
+        return (System.currentTimeMillis() - lastResolvedAt) < CONTROL_CACHE_WINDOW_MS
+    }
+
+    private fun applyResolvedState(activity: AppCompatActivity, effectiveControl: AppControlInfo?) {
+        lastResolvedControl = effectiveControl
+        lastResolvedAt = System.currentTimeMillis()
+
+        if (effectiveControl != null) {
+            AppControlInfo.persist(activity, effectiveControl)
+        }
+
+        if (effectiveControl?.appEnabled != false) {
+            dismissDialogIfVisible()
+            val callbacks = pendingAllowedCallbacks.toList()
+            pendingAllowedCallbacks.clear()
+            callbacks.forEach { it.invoke() }
+        } else {
+            pendingAllowedCallbacks.clear()
+            showBlockedDialog(activity, effectiveControl)
+        }
     }
 
     private fun buildFreshControlUrl(baseUrl: String): String {

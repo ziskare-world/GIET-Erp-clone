@@ -21,6 +21,9 @@ import com.android.volley.toolbox.StringRequest
 import org.json.JSONObject
 
 class SemesterMark : AppCompatActivity() {
+    companion object {
+        private const val INTERNAL_MARKS_REQUEST_TAG = "internal_marks_request"
+    }
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
 
@@ -182,6 +185,8 @@ class SemesterMark : AppCompatActivity() {
             }
         }
 
+        request.tag = INTERNAL_MARKS_REQUEST_TAG
+        requestQueue.cancelAll(INTERNAL_MARKS_REQUEST_TAG)
         requestQueue.add(request)
     }
 
@@ -238,5 +243,11 @@ class SemesterMark : AppCompatActivity() {
             row.addView(button)
             tableLayout.addView(row)
         }
+    }
+
+    override fun onStop() {
+        requestQueue.cancelAll(INTERNAL_MARKS_REQUEST_TAG)
+        swipeRefreshLayout.isRefreshing = false
+        super.onStop()
     }
 }

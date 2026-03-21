@@ -17,6 +17,9 @@ import com.android.volley.toolbox.StringRequest
 import org.json.JSONObject
 
 class SubjectwiseMarks : AppCompatActivity() {
+    companion object {
+        private const val SUBJECT_MARKS_REQUEST_TAG = "subject_marks_request"
+    }
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
 
@@ -113,6 +116,8 @@ class SubjectwiseMarks : AppCompatActivity() {
             }
         }
 
+        request.tag = SUBJECT_MARKS_REQUEST_TAG
+        requestQueue.cancelAll(SUBJECT_MARKS_REQUEST_TAG)
         requestQueue.add(request)
     }
 
@@ -156,5 +161,11 @@ class SubjectwiseMarks : AppCompatActivity() {
 
             tableLayout.addView(row)
         }
+    }
+
+    override fun onStop() {
+        requestQueue.cancelAll(SUBJECT_MARKS_REQUEST_TAG)
+        swipeRefreshLayout.isRefreshing = false
+        super.onStop()
     }
 }
