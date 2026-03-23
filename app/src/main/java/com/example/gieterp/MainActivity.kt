@@ -23,7 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var button: ImageButton
     private lateinit var rollnoInput: EditText
     private lateinit var versionText: TextView
-    private lateinit var appControlMonitor: AppControlMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +45,6 @@ class MainActivity : AppCompatActivity() {
         button = findViewById(R.id.submit)
         rollnoInput = findViewById(R.id.rollno)
         versionText = findViewById(R.id.versionText)
-        appControlMonitor = AppControlMonitor(this)
         versionText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
 
         button.setOnClickListener {
@@ -61,37 +59,23 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            AppControlChecker.checkAccess(this) {
-                sharedPref.edit {
-                    putString(AppSession.KEY_ROLL_NO, rollNo)
-                }
-
-                RemoteControlService.ensureInstallRegistered(applicationContext, rollNo)
-                AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
-
-                val dashboardIntent = Intent(this, MainActivity2::class.java)
-                AttendanceNotificationIntents.copyExtras(intent, dashboardIntent)
-                startActivity(dashboardIntent)
-                finish()
+            sharedPref.edit {
+                putString(AppSession.KEY_ROLL_NO, rollNo)
             }
+
+            RemoteControlService.ensureInstallRegistered(applicationContext, rollNo)
+            AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
+
+            val dashboardIntent = Intent(this, MainActivity2::class.java)
+            AttendanceNotificationIntents.copyExtras(intent, dashboardIntent)
+            startActivity(dashboardIntent)
+            finish()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        AppControlChecker.checkAccess(this) {
-            AppUpdateChecker.checkForUpdates(this)
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        appControlMonitor.start()
-    }
-
-    override fun onStop() {
-        appControlMonitor.stop()
-        super.onStop()
+        AppUpdateChecker.checkForUpdates(this)
     }
 
     private fun showSpecialAccessDialog() {

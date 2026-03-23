@@ -19,6 +19,15 @@ object AppControlChecker {
         if (activity.isFinishing || activity.isDestroyed) return
 
         val controlUrl = activity.getString(R.string.app_control_metadata_url).trim()
+        val appsScriptUrl = activity.getString(R.string.apps_script_web_app_url).trim()
+        if (controlUrl.isBlank() && appsScriptUrl.isBlank()) {
+            dismissDialogIfVisible()
+            pendingAllowedCallbacks.clear()
+            lastResolvedControl = null
+            lastResolvedAt = 0L
+            onAllowed?.invoke()
+            return
+        }
         onAllowed?.let { pendingAllowedCallbacks.add(it) }
 
         if (!isChecking && isRecentResultAvailable()) {

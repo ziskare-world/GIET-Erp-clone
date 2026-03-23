@@ -41,7 +41,6 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var dashboardAdContainer: FrameLayout
     private lateinit var privacyChoicesText: TextView
     private lateinit var bannerController: DashboardBannerAdController
-    private lateinit var appControlMonitor: AppControlMonitor
 
     private var lastAttendanceResponse: String? = null
     private var activeRollNo: String? = null
@@ -70,7 +69,6 @@ class MainActivity2 : AppCompatActivity() {
         dashboardAdContainer = findViewById(R.id.dashboardAdContainer)
         privacyChoicesText = findViewById(R.id.privacyChoicesText)
         bannerController = DashboardBannerAdController(this, dashboardAdContainer)
-        appControlMonitor = AppControlMonitor(this)
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
@@ -134,24 +132,17 @@ class MainActivity2 : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        AppControlChecker.checkAccess(this) {
-            val rollNo = activeRollNo
-            if (!rollNo.isNullOrBlank()) {
-                AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
-                RemoteControlService.heartbeat(applicationContext, rollNo)
-                refreshDashboardAccessAndData()
-            }
-            AppUpdateChecker.checkForUpdates(this)
-            if (adsConsentManager.canRequestAds) {
-                bannerController.loadBannerIfNeeded()
-            }
-            bannerController.onResume()
+        val rollNo = activeRollNo
+        if (!rollNo.isNullOrBlank()) {
+            AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
+            RemoteControlService.heartbeat(applicationContext, rollNo)
+            refreshDashboardAccessAndData()
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        appControlMonitor.start()
+        AppUpdateChecker.checkForUpdates(this)
+        if (adsConsentManager.canRequestAds) {
+            bannerController.loadBannerIfNeeded()
+        }
+        bannerController.onResume()
     }
 
     override fun onPause() {
@@ -160,7 +151,6 @@ class MainActivity2 : AppCompatActivity() {
     }
 
     override fun onStop() {
-        appControlMonitor.stop()
         requestQueue.cancelAll(ATTENDANCE_REQUEST_TAG)
         finishLoadingState()
         super.onStop()

@@ -12,8 +12,8 @@
     <string name="attendance_notification_body_format">%1$s: %2$s</string>
     <string name="attendance_notification_status_only">Attendance updated: %1$s</string>
     <string name="privacy_choices">Privacy choices</string>
-    <string name="app_control_metadata_url">https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/app-control.json</string>
-    <string name="apps_script_web_app_url">https://script.google.com/macros/s/AKfycbyNCciDUA6Up6zprA8b2wdc30aXjlcpb9ZS2givxzHiQsJ6sgNjUHuX3fcUngpZpZ3c/exec</string>
+    <string name="app_control_metadata_url"></string>
+    <string name="apps_script_web_app_url"></string>
     <string name="app_control_block_title">GIET ERP is temporarily closed</string>
     <string name="app_control_default_message">The app is currently unavailable by admin control. Please try again later.</string>
     <string name="app_control_exit">Exit app</string>
