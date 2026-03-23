@@ -115,7 +115,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/attendance_label"
+                            android:text="@string/full_attendance_label"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
 
@@ -127,6 +127,16 @@
                             android:text="@string/_0"
                             android:textColor="@color/accent_positive"
                             android:textSize="30sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/bunkedClassText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="@string/bunked_0"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -142,18 +152,28 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/bunk_label"
+                            android:text="@string/filtered_attendance_label"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
-                            android:id="@+id/bunkedClassText"
+                            android:id="@+id/filteredAttendancePercentText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/_0"
+                            android:textColor="@color/accent_positive"
+                            android:textSize="30sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/filteredAttendanceStatusText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="@string/bunked_0"
+                            android:text="@string/filtered_attendance_placeholder"
                             android:textColor="@color/text_primary"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.gieterp
 
+import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.ceil
@@ -9,6 +10,19 @@ private const val ATTENDANCE_THRESHOLD = 0.8
 private const val MIN_SEMESTER = 1
 private const val MAX_SEMESTER = 8
 private const val FLOATING_POINT_EPSILON = 1e-9
+private val FILTERED_ATTENDANCE_EXCLUSIONS = listOf(
+    "ENGLISH",
+    "APTITUDE",
+    "TECHNICAL",
+    "PYTHON",
+    "YTHON",
+)
+
+data class AttendanceRecord(
+    val attendedClasses: Double,
+    val totalClasses: Double,
+    val subjectLabel: String,
+)
 
 data class AttendanceSummary(
     val attendedClasses: Double,
@@ -84,6 +98,30 @@ object StudentAnalytics {
         }
     }
 
+    fun extractAttendanceRecord(row: JSONObject): AttendanceRecord? {
+        val counts = extractAttendanceCount(
+            totalValue = row.optString("Total", ""),
+            attendedValue = row.optString("Attended", ""),
+        ) ?: return null
+
+        return AttendanceRecord(
+            attendedClasses = counts.first,
+            totalClasses = counts.second,
+            subjectLabel = extractSubjectLabel(row),
+        )
+    }
+
+    fun shouldExcludeFromFilteredAttendance(subjectLabel: String): Boolean {
+        if (subjectLabel.isBlank()) return false
+        val normalized = subjectLabel.uppercase(Locale.US)
+            .replace(Regex("[^A-Z0-9]+"), " ")
+            .trim()
+
+        return FILTERED_ATTENDANCE_EXCLUSIONS.any { keyword ->
+            normalized.contains(keyword)
+        }
+    }
+
     fun summarizeAttendance(records: Iterable<Pair<Double, Double>>): AttendanceSummary? {
         var totalAttended = 0.0
         var totalClasses = 0.0
@@ -100,5 +138,34 @@ object StudentAnalytics {
         } else {
             null
         }
+    }
+
+    private fun extractSubjectLabel(row: JSONObject): String {
+        val preferredKeys = listOf(
+            "Subject",
+            "subject",
+            "SubjectName",
+            "subjectName",
+            "vchSubjectName",
+            "vchSubjectShortName",
+            "PaperName",
+            "paperName",
+            "CourseName",
+            "courseName",
+        )
+
+        preferredKeys.forEach { key ->
+            row.optString(key).trim().takeIf { it.isNotBlank() }?.let { return it }
+        }
+
+        val keys = row.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            if (key.contains("subject", ignoreCase = true) || key.contains("paper", ignoreCase = true) || key.contains("course", ignoreCase = true)) {
+                row.optString(key).trim().takeIf { it.isNotBlank() }?.let { return it }
+            }
+        }
+
+        return ""
     }
 }

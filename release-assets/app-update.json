@@ -1,13 +1,13 @@
 {
-  "latestVersionCode": 14,
-  "latestVersionName": "1.13",
-  "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=14",
+  "latestVersionCode": 15,
+  "latestVersionName": "1.14",
+  "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=15",
   "title": "Update required",
-  "message": "A fresh GIET ERP update is available with stability improvements. Please update now.",
+  "message": "A new GIET ERP update is available with dual attendance views and recent improvements. Please update now.",
   "forceUpdate": true,
   "changelog": [
+    "Added full and filtered attendance views",
     "Improved app stability",
-    "Removed admin control dependency from ERP app",
     "Refined request flow for smoother usage"
   ]
 }

@@ -35,7 +35,9 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var getAttendance: ImageButton
     private lateinit var getSemesterMark: ImageButton
     private lateinit var attendancePercentText: TextView
-    private lateinit var bunkedClassText: TextView
+    private lateinit var fullAttendanceStatusText: TextView
+    private lateinit var filteredAttendancePercentText: TextView
+    private lateinit var filteredAttendanceStatusText: TextView
     private lateinit var semesterButton: ImageButton
     private lateinit var restrictionMessageText: TextView
     private lateinit var dashboardAdContainer: FrameLayout
@@ -63,7 +65,9 @@ class MainActivity2 : AppCompatActivity() {
         getAttendance = findViewById(R.id.getattendance)
         getSemesterMark = findViewById(R.id.getsemestermarks)
         attendancePercentText = findViewById(R.id.attendancePercentText)
-        bunkedClassText = findViewById(R.id.bunkedClassText)
+        fullAttendanceStatusText = findViewById(R.id.bunkedClassText)
+        filteredAttendancePercentText = findViewById(R.id.filteredAttendancePercentText)
+        filteredAttendanceStatusText = findViewById(R.id.filteredAttendanceStatusText)
         semesterButton = findViewById(R.id.getSemester)
         restrictionMessageText = findViewById(R.id.restrictionMessageText)
         dashboardAdContainer = findViewById(R.id.dashboardAdContainer)
@@ -313,10 +317,10 @@ class MainActivity2 : AppCompatActivity() {
         lastAttendanceResponse = null
         restrictionMessageText.text = message.ifBlank { getString(R.string.roll_restricted_default_message) }
         restrictionMessageText.visibility = View.VISIBLE
-        attendancePercentText.text = getString(R.string.value_unknown)
-        bunkedClassText.text = getString(R.string.roll_restricted_status)
-        attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-        bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.danger))
+        renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null, getString(R.string.roll_restricted_status))
+        renderAttendanceSummary(filteredAttendancePercentText, filteredAttendanceStatusText, null, getString(R.string.roll_restricted_status))
+        fullAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
+        filteredAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
         setDashboardActionsEnabled(false)
     }
 
@@ -340,45 +344,63 @@ class MainActivity2 : AppCompatActivity() {
 
             if (dataArray == null || dataArray.length() == 0) {
                 Toast.makeText(this, json.optString("message", getString(R.string.attendance_no_data)), Toast.LENGTH_LONG).show()
-                attendancePercentText.text = getString(R.string.value_unknown)
-                bunkedClassText.text = getString(R.string.value_unknown)
-                attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null)
+                renderAttendanceSummary(filteredAttendancePercentText, filteredAttendanceStatusText, null)
                 return
             }
 
-            val attendanceRecords = buildList<Pair<Double, Double>> {
+            val attendanceRecords = buildList<AttendanceRecord> {
                 for (index in 0 until dataArray.length()) {
                     val obj = dataArray.getJSONObject(index)
-                    StudentAnalytics.extractAttendanceCount(
-                        totalValue = obj.optString("Total", ""),
-                        attendedValue = obj.optString("Attended", ""),
-                    )?.let(::add)
+                    StudentAnalytics.extractAttendanceRecord(obj)?.let(::add)
                 }
             }
 
-            val summary = StudentAnalytics.summarizeAttendance(attendanceRecords)
-            if (summary == null) {
-                attendancePercentText.text = getString(R.string.value_unknown)
-                bunkedClassText.text = getString(R.string.status_no_data)
-                attendancePercentText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                bunkedClassText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                return
-            }
+            val fullSummary = StudentAnalytics.summarizeAttendance(
+                attendanceRecords.map { it.attendedClasses to it.totalClasses },
+            )
+            val filteredSummary = StudentAnalytics.summarizeAttendance(
+                attendanceRecords
+                    .filterNot { StudentAnalytics.shouldExcludeFromFilteredAttendance(it.subjectLabel) }
+                    .map { it.attendedClasses to it.totalClasses },
+            )
 
-            attendancePercentText.text = summary.percentageLabel()
-            bunkedClassText.text = summary.statusLabel()
-            val indicatorColor = if (summary.isAtOrAboveThreshold) {
-                R.color.accent_positive
-            } else {
-                R.color.danger
-            }
-            attendancePercentText.setTextColor(ContextCompat.getColor(this, indicatorColor))
-            bunkedClassText.setTextColor(ContextCompat.getColor(this, indicatorColor))
+            renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, fullSummary)
+            renderAttendanceSummary(
+                percentageView = filteredAttendancePercentText,
+                statusView = filteredAttendanceStatusText,
+                summary = filteredSummary,
+                emptyStatus = getString(R.string.filtered_attendance_no_data),
+            )
         } catch (e: Exception) {
             val parseMessage = e.message ?: getString(R.string.status_no_data)
             Toast.makeText(this, getString(R.string.error_parse_format, parseMessage), Toast.LENGTH_LONG).show()
             Log.e("AttendanceParse", "Failed to parse attendance", e)
         }
+    }
+
+    private fun renderAttendanceSummary(
+        percentageView: TextView,
+        statusView: TextView,
+        summary: AttendanceSummary?,
+        emptyStatus: String = getString(R.string.status_no_data),
+    ) {
+        if (summary == null) {
+            percentageView.text = getString(R.string.value_unknown)
+            statusView.text = emptyStatus
+            percentageView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            statusView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            return
+        }
+
+        percentageView.text = summary.percentageLabel()
+        statusView.text = summary.statusLabel()
+        val indicatorColor = if (summary.isAtOrAboveThreshold) {
+            R.color.accent_positive
+        } else {
+            R.color.danger
+        }
+        percentageView.setTextColor(ContextCompat.getColor(this, indicatorColor))
+        statusView.setTextColor(ContextCompat.getColor(this, indicatorColor))
     }
 }

@@ -55,6 +55,10 @@
 
     <string name="attendance_overview">Attendance Overview</string>
     <string name="attendance_label">Attendance</string>
+    <string name="full_attendance_label">Full Attendance</string>
+    <string name="filtered_attendance_label">Filtered Attendance</string>
+    <string name="filtered_attendance_placeholder">Without English, Aptitude, Python, Technical</string>
+    <string name="filtered_attendance_no_data">No data after subject exclusion</string>
     <string name="bunk_label">Status</string>
     <string name="get_attendance">Attendance Report</string>
     <string name="semester_marks">Internal Assessments</string>
