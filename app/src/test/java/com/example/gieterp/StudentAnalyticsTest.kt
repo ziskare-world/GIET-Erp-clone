@@ -68,4 +68,29 @@ class StudentAnalyticsTest {
     fun `summarizeAttendance returns null when no valid classes exist`() {
         assertNull(StudentAnalytics.summarizeAttendance(emptyList()))
     }
+
+    @Test
+    fun `extractAttendanceColumnRecords uses report column names as subjects`() {
+        val rows = listOf(
+            mapOf(
+                "AttendanceDate" to "2026-03-01",
+                "MATH" to "1/1",
+                "ENGLISH" to "0/1",
+            ),
+            mapOf(
+                "AttendanceDate" to "2026-03-02",
+                "MATH" to "1/1",
+                "ENGLISH" to "1/1",
+            ),
+        )
+
+        val records = StudentAnalytics.extractAttendanceColumnRecords(rows)
+        val recordsBySubject = records.associateBy { it.subjectLabel }
+
+        assertEquals(2, records.size)
+        assertEquals(2.0, recordsBySubject.getValue("MATH").attendedClasses, 0.0)
+        assertEquals(2.0, recordsBySubject.getValue("MATH").totalClasses, 0.0)
+        assertEquals(1.0, recordsBySubject.getValue("ENGLISH").attendedClasses, 0.0)
+        assertEquals(2.0, recordsBySubject.getValue("ENGLISH").totalClasses, 0.0)
+    }
 }

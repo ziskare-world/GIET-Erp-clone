@@ -113,17 +113,9 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/full_attendance_label"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
-
-                        <TextView
                             android:id="@+id/attendancePercentText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="@string/_0"
                             android:textColor="@color/accent_positive"
                             android:textSize="30sp"
@@ -152,26 +144,26 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/filtered_attendance_label"
+                            android:text="@string/selected_attendance_label"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
-                            android:id="@+id/filteredAttendancePercentText"
+                            android:id="@+id/selectedAttendancePercentText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/_0"
+                            android:text="@string/value_unknown"
                             android:textColor="@color/accent_positive"
                             android:textSize="30sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/filteredAttendanceStatusText"
+                            android:id="@+id/selectedAttendanceStatusText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="@string/filtered_attendance_placeholder"
+                            android:text="@string/selected_attendance_placeholder"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -259,6 +251,40 @@
                             android:letterSpacing="0.02"
                             android:text="@string/semester_" />
                     </FrameLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/subjectSelectionCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_stat_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/TextAppearance.GietErp.SectionTitle"
+                        android:text="@string/subject_selection_title" />
+
+                    <TextView
+                        android:id="@+id/subjectSelectionSummaryText"
+                        style="@style/TextAppearance.GietErp.BodySecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/subject_selection_loading" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/subjectSelectionContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:chipSpacingHorizontal="8dp"
+                        app:chipSpacingVertical="8dp"
+                        app:singleLine="false"
+                        app:singleSelection="false" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>

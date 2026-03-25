@@ -1,13 +1,13 @@
 {
-  "latestVersionCode": 15,
-  "latestVersionName": "1.14",
-  "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=15",
-  "title": "Update required",
-  "message": "A new GIET ERP update is available with dual attendance views and recent improvements. Please update now.",
-  "forceUpdate": true,
-  "changelog": [
-    "Added full and filtered attendance views",
-    "Improved app stability",
-    "Refined request flow for smoother usage"
-  ]
+    "latestVersionCode":  16,
+    "latestVersionName":  "1.15",
+    "downloadUrl":  "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=16",
+    "title":  "Update required",
+    "message":  "A new GIET ERP update is available with improved attendance selection, restored whole-attendance bunk logic, and UI refinements. Please update now.",
+    "forceUpdate":  true,
+    "changelog":  [
+                      "Added row-wise subject chips for attendance selection",
+                      "Restored original whole-attendance bunk calculation",
+                      "Improved selected-subject attendance display"
+                  ]
 }

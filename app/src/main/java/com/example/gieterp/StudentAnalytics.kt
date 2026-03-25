@@ -1,5 +1,6 @@
 package com.example.gieterp
 
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
@@ -10,13 +11,6 @@ private const val ATTENDANCE_THRESHOLD = 0.8
 private const val MIN_SEMESTER = 1
 private const val MAX_SEMESTER = 8
 private const val FLOATING_POINT_EPSILON = 1e-9
-private val FILTERED_ATTENDANCE_EXCLUSIONS = listOf(
-    "ENGLISH",
-    "APTITUDE",
-    "TECHNICAL",
-    "PYTHON",
-    "YTHON",
-)
 
 data class AttendanceRecord(
     val attendedClasses: Double,
@@ -111,14 +105,50 @@ object StudentAnalytics {
         )
     }
 
-    fun shouldExcludeFromFilteredAttendance(subjectLabel: String): Boolean {
-        if (subjectLabel.isBlank()) return false
-        val normalized = subjectLabel.uppercase(Locale.US)
-            .replace(Regex("[^A-Z0-9]+"), " ")
-            .trim()
+    fun extractAttendanceColumnRecords(dataArray: JSONArray): List<AttendanceRecord> {
+        val rows = buildList<Map<String, String>> {
+            for (rowIndex in 0 until dataArray.length()) {
+                val row = dataArray.optJSONObject(rowIndex) ?: continue
+                val values = linkedMapOf<String, String>()
+                val keys = row.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    values[key] = row.optString(key, "")
+                }
+                add(values)
+            }
+        }
+        return extractAttendanceColumnRecords(rows)
+    }
 
-        return FILTERED_ATTENDANCE_EXCLUSIONS.any { keyword ->
-            normalized.contains(keyword)
+    fun extractAttendanceColumnRecords(rows: Iterable<Map<String, String>>): List<AttendanceRecord> {
+        val subjectTotals = linkedMapOf<String, Pair<Double, Double>>()
+
+        rows.forEach { row ->
+            row.forEach { (key, value) ->
+                if (key.equals("AttendanceDate", ignoreCase = true)) {
+                    return@forEach
+                }
+
+                val counts = extractAttendanceCount(
+                    totalValue = value,
+                    attendedValue = "",
+                ) ?: return@forEach
+
+                val subjectLabel = key.trim().ifBlank { "Unknown Subject" }
+                val existing = subjectTotals[subjectLabel]
+                val attended = (existing?.first ?: 0.0) + counts.first
+                val total = (existing?.second ?: 0.0) + counts.second
+                subjectTotals[subjectLabel] = attended to total
+            }
+        }
+
+        return subjectTotals.map { (subjectLabel, counts) ->
+            AttendanceRecord(
+                attendedClasses = counts.first,
+                totalClasses = counts.second,
+                subjectLabel = subjectLabel,
+            )
         }
     }
 

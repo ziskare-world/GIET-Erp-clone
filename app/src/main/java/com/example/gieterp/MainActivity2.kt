@@ -17,7 +17,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 class MainActivity2 : AppCompatActivity() {
     companion object {
@@ -36,15 +40,21 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var getSemesterMark: ImageButton
     private lateinit var attendancePercentText: TextView
     private lateinit var fullAttendanceStatusText: TextView
-    private lateinit var filteredAttendancePercentText: TextView
-    private lateinit var filteredAttendanceStatusText: TextView
+    private lateinit var selectedAttendancePercentText: TextView
+    private lateinit var selectedAttendanceStatusText: TextView
     private lateinit var semesterButton: ImageButton
     private lateinit var restrictionMessageText: TextView
+    private lateinit var subjectSelectionSummaryText: TextView
+    private lateinit var subjectSelectionContainer: ChipGroup
     private lateinit var dashboardAdContainer: FrameLayout
     private lateinit var privacyChoicesText: TextView
     private lateinit var bannerController: DashboardBannerAdController
 
     private var lastAttendanceResponse: String? = null
+    private var attendanceRecords: List<AttendanceRecord> = emptyList()
+    private var availableSubjects: List<String> = emptyList()
+    private val selectedSubjects = linkedSetOf<String>()
+    private var hasInitializedSubjectSelection = false
     private var activeRollNo: String? = null
     private var shouldOpenAttendanceAfterRefresh = false
     private var isRollRestricted = false
@@ -66,13 +76,16 @@ class MainActivity2 : AppCompatActivity() {
         getSemesterMark = findViewById(R.id.getsemestermarks)
         attendancePercentText = findViewById(R.id.attendancePercentText)
         fullAttendanceStatusText = findViewById(R.id.bunkedClassText)
-        filteredAttendancePercentText = findViewById(R.id.filteredAttendancePercentText)
-        filteredAttendanceStatusText = findViewById(R.id.filteredAttendanceStatusText)
+        selectedAttendancePercentText = findViewById(R.id.selectedAttendancePercentText)
+        selectedAttendanceStatusText = findViewById(R.id.selectedAttendanceStatusText)
         semesterButton = findViewById(R.id.getSemester)
         restrictionMessageText = findViewById(R.id.restrictionMessageText)
+        subjectSelectionSummaryText = findViewById(R.id.subjectSelectionSummaryText)
+        subjectSelectionContainer = findViewById(R.id.subjectSelectionContainer)
         dashboardAdContainer = findViewById(R.id.dashboardAdContainer)
         privacyChoicesText = findViewById(R.id.privacyChoicesText)
         bannerController = DashboardBannerAdController(this, dashboardAdContainer)
+        setSubjectSelectionEnabled(false)
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
@@ -315,18 +328,29 @@ class MainActivity2 : AppCompatActivity() {
     private fun renderRestrictedState(message: String) {
         isRollRestricted = true
         lastAttendanceResponse = null
+        attendanceRecords = emptyList()
+        availableSubjects = emptyList()
+        selectedSubjects.clear()
+        hasInitializedSubjectSelection = false
         restrictionMessageText.text = message.ifBlank { getString(R.string.roll_restricted_default_message) }
         restrictionMessageText.visibility = View.VISIBLE
         renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null, getString(R.string.roll_restricted_status))
-        renderAttendanceSummary(filteredAttendancePercentText, filteredAttendanceStatusText, null, getString(R.string.roll_restricted_status))
+        renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, null, getString(R.string.roll_restricted_status))
         fullAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
-        filteredAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
+        selectedAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
+        subjectSelectionSummaryText.text = restrictionMessageText.text
+        bindSubjectCheckboxes(emptyList())
+        setSubjectSelectionEnabled(false)
         setDashboardActionsEnabled(false)
     }
 
     private fun renderAllowedState() {
         isRollRestricted = false
         restrictionMessageText.visibility = View.GONE
+        if (attendanceRecords.isEmpty()) {
+            subjectSelectionSummaryText.text = getString(R.string.subject_selection_loading)
+        }
+        setSubjectSelectionEnabled(true)
         setDashboardActionsEnabled(true)
     }
 
@@ -344,38 +368,186 @@ class MainActivity2 : AppCompatActivity() {
 
             if (dataArray == null || dataArray.length() == 0) {
                 Toast.makeText(this, json.optString("message", getString(R.string.attendance_no_data)), Toast.LENGTH_LONG).show()
+                attendanceRecords = emptyList()
+                availableSubjects = emptyList()
+                selectedSubjects.clear()
+                hasInitializedSubjectSelection = false
                 renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null)
-                renderAttendanceSummary(filteredAttendancePercentText, filteredAttendanceStatusText, null)
+                renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, null)
+                bindSubjectCheckboxes(emptyList())
+                updateSubjectSelectionSummary()
+                setSubjectSelectionEnabled(true)
                 return
             }
 
-            val attendanceRecords = buildList<AttendanceRecord> {
+            val rowAttendanceRecords = buildList {
                 for (index in 0 until dataArray.length()) {
                     val obj = dataArray.getJSONObject(index)
                     StudentAnalytics.extractAttendanceRecord(obj)?.let(::add)
                 }
             }
+            attendanceRecords = StudentAnalytics.extractAttendanceColumnRecords(dataArray)
+                .map { record ->
+                    record.copy(
+                        subjectLabel = record.subjectLabel.ifBlank { getString(R.string.unknown_subject) },
+                    )
+                }
 
             val fullSummary = StudentAnalytics.summarizeAttendance(
-                attendanceRecords.map { it.attendedClasses to it.totalClasses },
+                rowAttendanceRecords.map { it.attendedClasses to it.totalClasses },
             )
-            val filteredSummary = StudentAnalytics.summarizeAttendance(
-                attendanceRecords
-                    .filterNot { StudentAnalytics.shouldExcludeFromFilteredAttendance(it.subjectLabel) }
-                    .map { it.attendedClasses to it.totalClasses },
-            )
+            val subjects = attendanceRecords
+                .map { it.subjectLabel }
+                .distinct()
+                .sortedBy { it.uppercase(Locale.US) }
+
+            syncSubjectSelection(subjects)
 
             renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, fullSummary)
-            renderAttendanceSummary(
-                percentageView = filteredAttendancePercentText,
-                statusView = filteredAttendanceStatusText,
-                summary = filteredSummary,
-                emptyStatus = getString(R.string.filtered_attendance_no_data),
-            )
+            renderSelectedAttendanceSummary()
         } catch (e: Exception) {
             val parseMessage = e.message ?: getString(R.string.status_no_data)
             Toast.makeText(this, getString(R.string.error_parse_format, parseMessage), Toast.LENGTH_LONG).show()
             Log.e("AttendanceParse", "Failed to parse attendance", e)
+        }
+    }
+
+    private fun syncSubjectSelection(subjects: List<String>) {
+        val previousSubjects = availableSubjects.toSet()
+        val wereAllSubjectsSelected = previousSubjects.isNotEmpty() && selectedSubjects.containsAll(previousSubjects)
+
+        availableSubjects = subjects
+        selectedSubjects.retainAll(subjects.toSet())
+
+        if (!hasInitializedSubjectSelection || wereAllSubjectsSelected) {
+            selectedSubjects.clear()
+            val savedSubjects = loadSavedSubjectSelection()
+            if (savedSubjects == null || wereAllSubjectsSelected) {
+                selectedSubjects.addAll(subjects)
+            } else {
+                selectedSubjects.addAll(subjects.filter { savedSubjects.contains(it) })
+            }
+            hasInitializedSubjectSelection = subjects.isNotEmpty()
+        }
+
+        bindSubjectCheckboxes(subjects)
+        persistSelectedSubjects()
+        updateSubjectSelectionSummary()
+        setSubjectSelectionEnabled(true)
+    }
+
+    private fun bindSubjectCheckboxes(subjects: List<String>) {
+        subjectSelectionContainer.removeAllViews()
+
+        if (subjects.isEmpty()) {
+            return
+        }
+
+        subjects.forEach { subject ->
+            val checkBox = Chip(this).apply {
+                text = subject
+                isCheckable = true
+                isChecked = selectedSubjects.contains(subject)
+                isClickable = true
+                isFocusable = true
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        selectedSubjects.add(subject)
+                    } else {
+                        selectedSubjects.remove(subject)
+                    }
+                    persistSelectedSubjects()
+                    renderSelectedAttendanceSummary()
+                }
+            }
+
+            subjectSelectionContainer.addView(checkBox)
+        }
+    }
+
+    private fun updateSubjectSelectionSummary() {
+        subjectSelectionSummaryText.text = when {
+            availableSubjects.isEmpty() -> getString(R.string.subject_selection_empty)
+            selectedSubjects.isEmpty() -> getString(R.string.selected_attendance_none_selected)
+            selectedSubjects.size == availableSubjects.size -> getString(
+                R.string.subject_selection_all_selected,
+                availableSubjects.size,
+            )
+            else -> getString(
+                R.string.subject_selection_count,
+                selectedSubjects.size,
+                availableSubjects.size,
+            )
+        }
+    }
+
+    private fun renderSelectedAttendanceSummary() {
+        updateSubjectSelectionSummary()
+        val selectedSummary = StudentAnalytics.summarizeAttendance(
+            attendanceRecords
+                .filter { selectedSubjects.contains(it.subjectLabel) }
+                .map { it.attendedClasses to it.totalClasses },
+        )
+
+        val emptyStatus = when {
+            attendanceRecords.isEmpty() -> getString(R.string.selected_attendance_no_data)
+            selectedSubjects.isEmpty() -> getString(R.string.selected_attendance_none_selected)
+            else -> getString(R.string.selected_attendance_no_data)
+        }
+
+        renderAttendanceSummary(
+            percentageView = selectedAttendancePercentText,
+            statusView = selectedAttendanceStatusText,
+            summary = selectedSummary,
+            emptyStatus = emptyStatus,
+        )
+    }
+
+    private fun persistSelectedSubjects() {
+        val rollNo = activeRollNo?.trim()?.uppercase(Locale.US).orEmpty()
+        if (rollNo.isBlank()) return
+
+        val payload = JSONArray().apply {
+            selectedSubjects.forEach { put(it) }
+        }
+
+        getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
+            putString("${AppSession.KEY_SELECTED_ATTENDANCE_SUBJECTS_PREFIX}$rollNo", payload.toString())
+        }
+    }
+
+    private fun loadSavedSubjectSelection(): Set<String>? {
+        val rollNo = activeRollNo?.trim()?.uppercase(Locale.US).orEmpty()
+        if (rollNo.isBlank()) return null
+
+        val preferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val preferenceKey = "${AppSession.KEY_SELECTED_ATTENDANCE_SUBJECTS_PREFIX}$rollNo"
+        if (!preferences.contains(preferenceKey)) {
+            return null
+        }
+
+        val rawSelection = preferences.getString(preferenceKey, "[]").orEmpty()
+        return try {
+            val jsonArray = JSONArray(rawSelection)
+            buildSet {
+                for (index in 0 until jsonArray.length()) {
+                    jsonArray.optString(index)
+                        .trim()
+                        .takeIf { it.isNotBlank() }
+                        ?.let(::add)
+                }
+            }
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    private fun setSubjectSelectionEnabled(enabled: Boolean) {
+        val effectiveEnabled = enabled && !isRollRestricted
+        subjectSelectionContainer.alpha = if (effectiveEnabled) 1f else 0.55f
+
+        for (index in 0 until subjectSelectionContainer.childCount) {
+            subjectSelectionContainer.getChildAt(index).isEnabled = effectiveEnabled
         }
     }
 

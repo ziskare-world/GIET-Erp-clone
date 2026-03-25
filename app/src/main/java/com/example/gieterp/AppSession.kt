@@ -3,6 +3,7 @@ package com.example.gieterp
 object AppSession {
     const val PREFERENCES_NAME = "MyPrefs"
     const val KEY_ROLL_NO = "rollno"
+    const val KEY_SELECTED_ATTENDANCE_SUBJECTS_PREFIX = "selectedAttendanceSubjects_"
     const val KEY_STUDENT_ID = "studentId"
     const val KEY_PUSH_TOKEN = "pushToken"
     const val KEY_PUSH_TOKEN_ROLL_NO = "pushTokenRollNo"
