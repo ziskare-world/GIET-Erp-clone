@@ -70,6 +70,22 @@
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_secondary" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            style="@style/TextAppearance.GietErp.BodySecondary"
+            android:text="@string/select_semester" />
+
+        <Spinner
+            android:id="@+id/semesterSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_input_field"
+            android:paddingHorizontal="16dp"
+            android:spinnerMode="dropdown" />
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"

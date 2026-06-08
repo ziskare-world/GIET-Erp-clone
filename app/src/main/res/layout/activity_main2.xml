@@ -44,6 +44,15 @@
                 android:text="@string/roll_no"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
+
+            <Spinner
+                android:id="@+id/semesterSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_input_field"
+                android:paddingHorizontal="8dp"
+                android:spinnerMode="dropdown" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -130,6 +139,15 @@
                             android:textColor="@color/text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/attendanceInsightText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            style="@style/TextAppearance.GietErp.BodySecondary"
+                            android:text="@string/attendance_insight_placeholder"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
                     <LinearLayout

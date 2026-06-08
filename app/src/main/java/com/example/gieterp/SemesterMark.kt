@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
@@ -35,6 +36,7 @@ class SemesterMark : AppCompatActivity() {
     private var currentSemester = 1
     private var maxSemester = 1
     private var rollNo: String? = null
+    private var isOverrideStudent = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +55,7 @@ class SemesterMark : AppCompatActivity() {
         val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
 
         if (!overrideRollNo.isNullOrBlank()) {
+            isOverrideStudent = true
             rollNo = overrideRollNo
             maxSemester = intent.getIntExtra(
                 AppSession.EXTRA_OVERRIDE_MAX_SEMESTER,
@@ -78,8 +81,15 @@ class SemesterMark : AppCompatActivity() {
                 return
             }
 
-            currentSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
-            maxSemester = currentSemester
+            val savedSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
+                sharedPref.getInt(
+                    AppSession.KEY_SELECTED_SEMESTER,
+                    StudentAnalytics.calculateCurrentSemester(rollNo!!),
+                ),
+            )
+            currentSemester = savedSemester.coerceIn(1, 8)
+            maxSemester = 8
         }
 
         RemoteControlService.checkRollAccess(this, rollNo!!) { accessInfo ->
@@ -133,6 +143,11 @@ class SemesterMark : AppCompatActivity() {
                 }
 
                 currentSemester = selectedSemester
+                if (!isOverrideStudent) {
+                    getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
+                        putInt(AppSession.KEY_SELECTED_SEMESTER, currentSemester)
+                    }
+                }
                 Toast.makeText(
                     this@SemesterMark,
                     getString(R.string.loading_semester_marks, selectedSemester),

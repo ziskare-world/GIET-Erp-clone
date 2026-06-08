@@ -47,6 +47,39 @@ object AppUpdateChecker {
 
     internal const val EXTRA_UPDATE_VERSION_CODE = "extraUpdateVersionCode"
 
+    internal fun checkAndNotifyUpdate(context: Context, onUpdateAvailable: (updateInfo: AppUpdateInfo) -> Unit) {
+        val metadataLocation = context.getString(R.string.update_metadata_url).trim()
+        if (metadataLocation.isBlank()) return
+
+        val freshMetadataUrl = buildFreshMetadataUrl(metadataLocation)
+        val request = object : JsonObjectRequest(
+            Request.Method.GET,
+            freshMetadataUrl,
+            null,
+            { jsonObject ->
+                val updateInfo = AppUpdateInfo.fromJson(
+                    json = jsonObject,
+                    defaultTitle = context.getString(R.string.update_available_title),
+                    defaultMessage = context.getString(R.string.update_available_message),
+                )
+                if (updateInfo != null) {
+                    val currentVersionCode = getCurrentVersionCode(context)
+                    if (updateInfo.latestVersionCode > currentVersionCode) {
+                        onUpdateAvailable(updateInfo)
+                    }
+                }
+            },
+            { /* Error handled silently in background */ },
+        ) {
+            override fun getHeaders(): MutableMap<String, String> = mutableMapOf(
+                "Cache-Control" to "no-cache",
+                "Pragma" to "no-cache",
+            )
+        }
+        request.setShouldCache(false)
+        VolleyProvider.getRequestQueue(context).add(request)
+    }
+
     fun checkForUpdates(activity: AppCompatActivity) {
         if (isCheckInProgress || activeDialog?.isShowing == true) {
             return
@@ -531,19 +564,19 @@ object AppUpdateChecker {
         }
     }
 
-    private fun getCurrentVersionCode(activity: AppCompatActivity): Long {
-        val packageInfo = getPackageInfo(activity)
+    private fun getCurrentVersionCode(context: Context): Long {
+        val packageInfo = getPackageInfo(context)
         return PackageInfoCompat.getLongVersionCode(packageInfo)
     }
 
-    private fun getPackageInfo(activity: AppCompatActivity) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        activity.packageManager.getPackageInfo(
-            activity.packageName,
+    private fun getPackageInfo(context: Context) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.packageManager.getPackageInfo(
+            context.packageName,
             PackageManager.PackageInfoFlags.of(0),
         )
     } else {
         @Suppress("DEPRECATION")
-        activity.packageManager.getPackageInfo(activity.packageName, 0)
+        context.packageManager.getPackageInfo(context.packageName, 0)
     }
 
     private data class UpdateDialogState(

@@ -83,8 +83,15 @@ class Semester : AppCompatActivity() {
                 return
             }
 
-            selectedSemester = StudentAnalytics.calculateCurrentSemester(rollNo!!)
-            maxSemester = selectedSemester
+            val savedSemester = intent.getIntExtra(
+                AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
+                sharedPreferences.getInt(
+                    AppSession.KEY_SELECTED_SEMESTER,
+                    StudentAnalytics.calculateCurrentSemester(rollNo!!),
+                ),
+            )
+            selectedSemester = savedSemester.coerceIn(1, 8)
+            maxSemester = 8
         }
 
         RemoteControlService.checkRollAccess(this, rollNo!!) { accessInfo ->
@@ -268,6 +275,11 @@ class Semester : AppCompatActivity() {
                 if (ignoreInitialSelection) {
                     ignoreInitialSelection = false
                     return
+                }
+                if (!isOverrideStudent) {
+                    getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
+                        putInt(AppSession.KEY_SELECTED_SEMESTER, selectedSemester)
+                    }
                 }
                 loadSemesterData(selectedSemester)
             }

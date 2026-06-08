@@ -7,18 +7,24 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
@@ -26,6 +32,8 @@ import java.util.Locale
 class MainActivity2 : AppCompatActivity() {
     companion object {
         private const val ATTENDANCE_REQUEST_TAG = "dashboard_attendance_request"
+        private const val REFRESH_CACHE_KEY = "dashboard_last_refresh_ts"
+        private const val REFRESH_CACHE_DURATION_MS = 10 * 60 * 1000L // 10 minutes
     }
 
     private val requestQueue by lazy { VolleyProvider.getRequestQueue(this) }
@@ -40,6 +48,7 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var getSemesterMark: ImageButton
     private lateinit var attendancePercentText: TextView
     private lateinit var fullAttendanceStatusText: TextView
+    private lateinit var attendanceInsightText: TextView
     private lateinit var selectedAttendancePercentText: TextView
     private lateinit var selectedAttendanceStatusText: TextView
     private lateinit var semesterButton: ImageButton
@@ -49,6 +58,8 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var dashboardAdContainer: FrameLayout
     private lateinit var privacyChoicesText: TextView
     private lateinit var bannerController: DashboardBannerAdController
+    private lateinit var semesterSpinner: Spinner
+
 
     private var lastAttendanceResponse: String? = null
     private var attendanceRecords: List<AttendanceRecord> = emptyList()
@@ -58,6 +69,7 @@ class MainActivity2 : AppCompatActivity() {
     private var activeRollNo: String? = null
     private var shouldOpenAttendanceAfterRefresh = false
     private var isRollRestricted = false
+    private var currentDashboardSemester = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,11 +83,13 @@ class MainActivity2 : AppCompatActivity() {
         swipeRefreshLayout = findViewById(R.id.swipeRefreshDashboard)
         appTitleText = findViewById(R.id.appTitleText)
         rollnoView = findViewById(R.id.rollno)
+        semesterSpinner = findViewById(R.id.semesterSpinner)
         logoutButton = findViewById(R.id.buttonLogout)
         getAttendance = findViewById(R.id.getattendance)
         getSemesterMark = findViewById(R.id.getsemestermarks)
         attendancePercentText = findViewById(R.id.attendancePercentText)
         fullAttendanceStatusText = findViewById(R.id.bunkedClassText)
+        attendanceInsightText = findViewById(R.id.attendanceInsightText)
         selectedAttendancePercentText = findViewById(R.id.selectedAttendancePercentText)
         selectedAttendanceStatusText = findViewById(R.id.selectedAttendanceStatusText)
         semesterButton = findViewById(R.id.getSemester)
@@ -103,6 +117,7 @@ class MainActivity2 : AppCompatActivity() {
         appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
         activeRollNo = rollNo
+        setupSemesterSpinner()
         shouldOpenAttendanceAfterRefresh = AttendanceNotificationIntents.shouldOpenAttendance(intent)
         setupSwipeToRefresh()
         setupAdsFooter()
@@ -112,6 +127,8 @@ class MainActivity2 : AppCompatActivity() {
             sharedPref.edit {
                 remove(AppSession.KEY_ROLL_NO)
                 remove(AppSession.KEY_STUDENT_ID)
+                remove(AppSession.KEY_SELECTED_SEMESTER)
+                remove(REFRESH_CACHE_KEY)
             }
             startActivity(Intent(this, MainActivity::class.java))
             finish()
@@ -135,7 +152,7 @@ class MainActivity2 : AppCompatActivity() {
                 Toast.makeText(this, R.string.roll_restricted_default_message, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            startActivity(Intent(this, SemesterMark::class.java))
+            startActivity(buildSemesterIntent(SemesterMark::class.java))
         }
 
         semesterButton.setOnClickListener {
@@ -143,7 +160,7 @@ class MainActivity2 : AppCompatActivity() {
                 Toast.makeText(this, R.string.roll_restricted_default_message, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            startActivity(Intent(this, Semester::class.java))
+            startActivity(buildSemesterIntent(Semester::class.java))
         }
     }
 
@@ -151,9 +168,18 @@ class MainActivity2 : AppCompatActivity() {
         super.onResume()
         val rollNo = activeRollNo
         if (!rollNo.isNullOrBlank()) {
-            AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
-            RemoteControlService.heartbeat(applicationContext, rollNo)
-            refreshDashboardAccessAndData()
+            lifecycleScope.launch(Dispatchers.IO) {
+                AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
+                RemoteControlService.heartbeat(applicationContext, rollNo)
+            }
+
+            val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            val lastRefresh = sharedPref.getLong(REFRESH_CACHE_KEY, 0L)
+            val now = System.currentTimeMillis()
+
+            if (lastAttendanceResponse == null || now - lastRefresh > REFRESH_CACHE_DURATION_MS) {
+                refreshDashboardAccessAndData()
+            }
         }
         AppUpdateChecker.checkForUpdates(this)
         if (adsConsentManager.canRequestAds) {
@@ -224,6 +250,52 @@ class MainActivity2 : AppCompatActivity() {
         }
     }
 
+    private fun setupSemesterSpinner() {
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            (1..8).map { getString(R.string.semester_number_format, it) },
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        semesterSpinner.adapter = adapter
+
+        val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val savedSemester = sharedPref.getInt(AppSession.KEY_SELECTED_SEMESTER, -1)
+
+        val initialSemester = if (savedSemester != -1) {
+            savedSemester
+        } else {
+            activeRollNo?.let { StudentAnalytics.calculateCurrentSemester(it) } ?: 1
+        }
+
+        currentDashboardSemester = initialSemester
+        semesterSpinner.setSelection(initialSemester - 1)
+
+        semesterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val selectedSemester = position + 1
+                if (selectedSemester == currentDashboardSemester) {
+                    return
+                }
+                currentDashboardSemester = selectedSemester
+                sharedPref.edit {
+                    putInt(AppSession.KEY_SELECTED_SEMESTER, selectedSemester)
+                    remove(REFRESH_CACHE_KEY)
+                }
+                lastAttendanceResponse = null
+                attendanceRecords = emptyList()
+                availableSubjects = emptyList()
+                selectedSubjects.clear()
+                hasInitializedSubjectSelection = false
+                bindSubjectCheckboxes(emptyList())
+                updateSubjectSelectionSummary()
+                refreshDashboardAccessAndData(fromSwipeRefresh = false)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) = Unit
+        }
+    }
+
     private fun updatePrivacyChoicesVisibility() {
         privacyChoicesText.visibility = if (adsConsentManager.isPrivacyOptionsRequired) {
             View.VISIBLE
@@ -254,9 +326,17 @@ class MainActivity2 : AppCompatActivity() {
             }
 
             renderAllowedState()
+
+            val selectedSemester = selectedSemester()
+
+            getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE).edit {
+                putInt(AppSession.KEY_SELECTED_SEMESTER, selectedSemester)
+                putLong(REFRESH_CACHE_KEY, System.currentTimeMillis())
+            }
+
             fetchAttendance(
                 rollNo = rollNo,
-                semester = StudentAnalytics.calculateCurrentSemester(rollNo),
+                semester = selectedSemester,
                 fromSwipeRefresh = fromSwipeRefresh,
                 manageLoadingState = false,
             )
@@ -322,7 +402,18 @@ class MainActivity2 : AppCompatActivity() {
     private fun sendResponse(response: String) {
         val intent = Intent(this, AttendanceActivity::class.java)
         intent.putExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE, response)
+        intent.putExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, selectedSemester())
         startActivity(intent)
+    }
+
+    private fun selectedSemester(): Int {
+        return (semesterSpinner.selectedItemPosition + 1).coerceIn(1, 8)
+    }
+
+    private fun buildSemesterIntent(destination: Class<*>): Intent {
+        return Intent(this, destination).apply {
+            putExtra(AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER, selectedSemester())
+        }
     }
 
     private fun renderRestrictedState(message: String) {
@@ -334,8 +425,8 @@ class MainActivity2 : AppCompatActivity() {
         hasInitializedSubjectSelection = false
         restrictionMessageText.text = message.ifBlank { getString(R.string.roll_restricted_default_message) }
         restrictionMessageText.visibility = View.VISIBLE
-        renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null, getString(R.string.roll_restricted_status))
-        renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, null, getString(R.string.roll_restricted_status))
+        renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, attendanceInsightText, null, getString(R.string.roll_restricted_status))
+        renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, attendanceInsightText, null, getString(R.string.roll_restricted_status))
         fullAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
         selectedAttendanceStatusText.setTextColor(ContextCompat.getColor(this, R.color.danger))
         subjectSelectionSummaryText.text = restrictionMessageText.text
@@ -372,8 +463,8 @@ class MainActivity2 : AppCompatActivity() {
                 availableSubjects = emptyList()
                 selectedSubjects.clear()
                 hasInitializedSubjectSelection = false
-                renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, null)
-                renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, null)
+                renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, attendanceInsightText, null)
+                renderAttendanceSummary(selectedAttendancePercentText, selectedAttendanceStatusText, attendanceInsightText, null)
                 bindSubjectCheckboxes(emptyList())
                 updateSubjectSelectionSummary()
                 setSubjectSelectionEnabled(true)
@@ -403,7 +494,7 @@ class MainActivity2 : AppCompatActivity() {
 
             syncSubjectSelection(subjects)
 
-            renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, fullSummary)
+            renderAttendanceSummary(attendancePercentText, fullAttendanceStatusText, attendanceInsightText, fullSummary)
             renderSelectedAttendanceSummary()
         } catch (e: Exception) {
             val parseMessage = e.message ?: getString(R.string.status_no_data)
@@ -498,6 +589,7 @@ class MainActivity2 : AppCompatActivity() {
         renderAttendanceSummary(
             percentageView = selectedAttendancePercentText,
             statusView = selectedAttendanceStatusText,
+            insightView = attendanceInsightText,
             summary = selectedSummary,
             emptyStatus = emptyStatus,
         )
@@ -554,12 +646,14 @@ class MainActivity2 : AppCompatActivity() {
     private fun renderAttendanceSummary(
         percentageView: TextView,
         statusView: TextView,
+        insightView: TextView,
         summary: AttendanceSummary?,
         emptyStatus: String = getString(R.string.status_no_data),
     ) {
         if (summary == null) {
             percentageView.text = getString(R.string.value_unknown)
             statusView.text = emptyStatus
+            insightView.text = ""
             percentageView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
             statusView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
             return
@@ -567,6 +661,14 @@ class MainActivity2 : AppCompatActivity() {
 
         percentageView.text = summary.percentageLabel()
         statusView.text = summary.statusLabel()
+
+        val insight = if (summary.isAtOrAboveThreshold) {
+            "You're on track! Keep it up."
+        } else {
+            "Warning: Low attendance. Try to attend more classes."
+        }
+        insightView.text = insight
+
         val indicatorColor = if (summary.isAtOrAboveThreshold) {
             R.color.accent_positive
         } else {

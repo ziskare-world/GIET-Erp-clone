@@ -28,8 +28,8 @@ android {
         applicationId = "com.example.gieterp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.15"
+        versionCode = 17
+        versionName = "1.16"
         buildConfigField("boolean", "FCM_ENABLED", hasGoogleServicesConfig.toString())
         resValue("string", "admob_app_id", "ca-app-pub-5619760951459090~8317918493")
 
@@ -87,6 +87,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

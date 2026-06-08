@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var button: ImageButton
     private lateinit var rollnoInput: EditText
+    private lateinit var semesterSpinner: Spinner
     private lateinit var versionText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,8 +47,10 @@ class MainActivity : AppCompatActivity() {
 
         button = findViewById(R.id.submit)
         rollnoInput = findViewById(R.id.rollno)
+        semesterSpinner = findViewById(R.id.semesterSpinner)
         versionText = findViewById(R.id.versionText)
         versionText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
+        setupSemesterSpinner()
 
         button.setOnClickListener {
             val rollNo = rollnoInput.text.toString().trim()
@@ -61,6 +66,7 @@ class MainActivity : AppCompatActivity() {
 
             sharedPref.edit {
                 putString(AppSession.KEY_ROLL_NO, rollNo)
+                putInt(AppSession.KEY_SELECTED_SEMESTER, selectedSemester())
             }
 
             RemoteControlService.ensureInstallRegistered(applicationContext, rollNo)
@@ -71,6 +77,25 @@ class MainActivity : AppCompatActivity() {
             startActivity(dashboardIntent)
             finish()
         }
+    }
+
+    private fun setupSemesterSpinner() {
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            (1..8).map { getString(R.string.semester_number_format, it) },
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        semesterSpinner.adapter = adapter
+
+        val savedSemester = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            .getInt(AppSession.KEY_SELECTED_SEMESTER, 1)
+            .coerceIn(1, 8)
+        semesterSpinner.setSelection(savedSemester - 1)
+    }
+
+    private fun selectedSemester(): Int {
+        return (semesterSpinner.selectedItemPosition + 1).coerceIn(1, 8)
     }
 
     override fun onResume() {

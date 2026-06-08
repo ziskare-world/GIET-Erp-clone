@@ -6,6 +6,7 @@ object AppSession {
     const val KEY_SELECTED_ATTENDANCE_SUBJECTS_PREFIX = "selectedAttendanceSubjects_"
     const val KEY_STUDENT_ID = "studentId"
     const val KEY_PUSH_TOKEN = "pushToken"
+    const val KEY_SELECTED_SEMESTER = "selectedSemester"
     const val KEY_PUSH_TOKEN_ROLL_NO = "pushTokenRollNo"
     const val KEY_LAST_ATTENDANCE_EVENT_ID = "lastAttendanceEventId"
     const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "notificationsPermissionRequested"
