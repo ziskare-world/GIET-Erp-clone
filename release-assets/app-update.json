@@ -1,13 +1,13 @@
 {
-    "latestVersionCode":  17,
-    "latestVersionName":  "1.16",
-    "downloadUrl":  "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=17",
+    "latestVersionCode":  18,
+    "latestVersionName":  "1.17",
+    "downloadUrl":  "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=18",
     "title":  "Update required",
-    "message":  "A new GIET ERP update is available with semester selection at sign-in, faster dashboard refreshes, and a more reliable update flow. Please update now.",
+    "message":  "A new GIET ERP update is available with student name displays, CSV reports export, and general improvements. Please update now.",
     "forceUpdate":  true,
     "changelog":  [
-                      "Added semester selection where roll number is entered",
-                      "Improved dashboard semester refresh behavior",
-                      "Improved in-app update checks and download handling"
+                      "Added student name display on the dashboard, attendance, and semester mark screens",
+                      "Added CSV export button for attendance and semester mark reports",
+                      "General improvements and bug fixes"
                   ]
 }

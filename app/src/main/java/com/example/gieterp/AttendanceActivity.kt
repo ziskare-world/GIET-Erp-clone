@@ -47,13 +47,27 @@ class AttendanceActivity : AppCompatActivity() {
         pendingResponse = intent.getStringExtra(AppSession.EXTRA_ATTENDANCE_RESPONSE)
         pendingSemester = overrideSemester
 
-        if (!overrideRollNo.isNullOrBlank()) {
+        val nameToShow = overrideName ?: sharedPreferences.getString(AppSession.KEY_STUDENT_NAME, null)
+        val rollNoToShow = overrideRollNo ?: sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
+
+        if (!rollNoToShow.isNullOrBlank()) {
             studentIdentityText.text = getString(
                 R.string.special_student_identity_format,
-                overrideName?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
-                overrideRollNo,
+                nameToShow?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
+                rollNoToShow,
             )
             studentIdentityText.visibility = View.VISIBLE
+        }
+
+        val exportButton: android.widget.ImageButton = findViewById(R.id.buttonExport)
+        exportButton.setOnClickListener {
+            val sName = nameToShow?.trim()?.replace("\\s+".toRegex(), "_") ?: "student"
+            val roll = rollNoToShow?.trim() ?: "unknown"
+            ReportExporter.exportTableToCsv(
+                context = this,
+                tableLayout = tableLayout,
+                fileName = "Attendance_${sName}_${roll}.csv"
+            )
         }
 
         val rollNo = activeRollNo

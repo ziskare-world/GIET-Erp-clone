@@ -55,6 +55,18 @@ class Semester : AppCompatActivity() {
 
         val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
         val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
+        val sharedPreferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val nameToShow = overrideName ?: sharedPreferences.getString(AppSession.KEY_STUDENT_NAME, null)
+        val rollNoToShow = overrideRollNo ?: sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
+
+        if (!rollNoToShow.isNullOrBlank()) {
+            studentIdentityText.text = getString(
+                R.string.special_student_identity_format,
+                nameToShow?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
+                rollNoToShow,
+            )
+            studentIdentityText.visibility = View.VISIBLE
+        }
 
         if (!overrideRollNo.isNullOrBlank()) {
             isOverrideStudent = true
@@ -67,14 +79,7 @@ class Semester : AppCompatActivity() {
                 AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
                 maxSemester,
             ).coerceIn(1, maxSemester)
-            studentIdentityText.text = getString(
-                R.string.special_student_identity_format,
-                overrideName?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
-                overrideRollNo,
-            )
-            studentIdentityText.visibility = View.VISIBLE
         } else {
-            val sharedPreferences = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
             rollNo = sharedPreferences.getString(AppSession.KEY_ROLL_NO, null)
 
             if (rollNo.isNullOrBlank()) {

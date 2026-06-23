@@ -15,9 +15,22 @@
         android:layout_height="wrap_content"
         style="@style/TextAppearance.GietErp.ScreenTitle"
         android:text="@string/attendance_report1"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/buttonExport"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/buttonExport"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_secondary_button"
+        android:contentDescription="Export Report"
+        android:src="@drawable/ic_export"
+        android:padding="8dp"
+        app:tint="@color/text_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/titleText"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/studentIdentityText"

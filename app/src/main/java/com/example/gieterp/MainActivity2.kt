@@ -42,6 +42,7 @@ class MainActivity2 : AppCompatActivity() {
     private lateinit var loadingOverlay: View
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var appTitleText: TextView
+    private lateinit var studentNameView: TextView
     private lateinit var rollnoView: TextView
     private lateinit var logoutButton: Button
     private lateinit var getAttendance: ImageButton
@@ -82,6 +83,7 @@ class MainActivity2 : AppCompatActivity() {
         loadingOverlay = findViewById(R.id.loadingOverlay)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshDashboard)
         appTitleText = findViewById(R.id.appTitleText)
+        studentNameView = findViewById(R.id.studentName)
         rollnoView = findViewById(R.id.rollno)
         semesterSpinner = findViewById(R.id.semesterSpinner)
         logoutButton = findViewById(R.id.buttonLogout)
@@ -115,6 +117,8 @@ class MainActivity2 : AppCompatActivity() {
         }
 
         appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
+        val savedStudentName = sharedPref.getString(AppSession.KEY_STUDENT_NAME, null)
+        updateNameDisplay(savedStudentName)
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)
         activeRollNo = rollNo
         setupSemesterSpinner()
@@ -334,12 +338,14 @@ class MainActivity2 : AppCompatActivity() {
                 putLong(REFRESH_CACHE_KEY, System.currentTimeMillis())
             }
 
-            fetchAttendance(
-                rollNo = rollNo,
-                semester = selectedSemester,
-                fromSwipeRefresh = fromSwipeRefresh,
-                manageLoadingState = false,
-            )
+            fetchStudentName(rollNo, selectedSemester) {
+                fetchAttendance(
+                    rollNo = rollNo,
+                    semester = selectedSemester,
+                    fromSwipeRefresh = fromSwipeRefresh,
+                    manageLoadingState = false,
+                )
+            }
         }
     }
 
@@ -676,5 +682,67 @@ class MainActivity2 : AppCompatActivity() {
         }
         percentageView.setTextColor(ContextCompat.getColor(this, indicatorColor))
         statusView.setTextColor(ContextCompat.getColor(this, indicatorColor))
+    }
+
+    private fun updateNameDisplay(name: String?) {
+        if (!name.isNullOrBlank()) {
+            studentNameView.text = "Student: $name"
+            studentNameView.visibility = View.VISIBLE
+        } else {
+            studentNameView.visibility = View.GONE
+        }
+    }
+
+    private fun fetchStudentName(rollNo: String, semester: Int, onComplete: () -> Unit) {
+        val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val url = "https://gietuerp.in/Student/GetAll"
+        val request = object : StringRequest(
+            Request.Method.POST,
+            url,
+            { response ->
+                try {
+                    val json = JSONObject(response)
+                    val dataArray = json.optJSONArray("data")
+                    if (dataArray != null && dataArray.length() > 0) {
+                        for (i in 0 until dataArray.length()) {
+                            val studentJson = dataArray.getJSONObject(i)
+                            val roll = studentJson.optString("vchRollNo", "")
+                            if (roll.equals(rollNo, ignoreCase = true)) {
+                                val name = studentJson.optString("vchName", "")
+                                if (name.isNotBlank()) {
+                                    sharedPref.edit {
+                                        putString(AppSession.KEY_STUDENT_NAME, name)
+                                    }
+                                    updateNameDisplay(name)
+                                    break
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity2", "Error parsing student name", e)
+                }
+                onComplete()
+            },
+            { error ->
+                Log.w("MainActivity2", "Failed to fetch student name: ${error.message}")
+                onComplete()
+            }
+        ) {
+            override fun getParams() = mutableMapOf(
+                "intProgramID" to "1",
+                "intBranchID" to "0",
+                "intSemester" to semester.toString(),
+                "vchRollNo" to rollNo,
+                "vchName" to ""
+            )
+
+            @Throws(AuthFailureError::class)
+            override fun getHeaders() = mutableMapOf(
+                "Content-Type" to "application/x-www-form-urlencoded"
+            )
+        }
+        request.tag = "fetch_student_name_request"
+        requestQueue.add(request)
     }
 }

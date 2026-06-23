@@ -53,6 +53,29 @@ class SemesterMark : AppCompatActivity() {
 
         val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
         val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
+        val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+        val nameToShow = overrideName ?: sharedPref.getString(AppSession.KEY_STUDENT_NAME, null)
+        val rollNoToShow = overrideRollNo ?: sharedPref.getString(AppSession.KEY_ROLL_NO, null)
+
+        if (!rollNoToShow.isNullOrBlank()) {
+            studentIdentityText.text = getString(
+                R.string.special_student_identity_format,
+                nameToShow?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
+                rollNoToShow,
+            )
+            studentIdentityText.visibility = View.VISIBLE
+        }
+
+        val exportButton: android.widget.ImageButton = findViewById(R.id.buttonExport)
+        exportButton.setOnClickListener {
+            val sName = nameToShow?.trim()?.replace("\\s+".toRegex(), "_") ?: "student"
+            val roll = rollNoToShow?.trim() ?: "unknown"
+            ReportExporter.exportTableToCsv(
+                context = this,
+                tableLayout = tableLayout,
+                fileName = "SemesterMarks_${sName}_${roll}_Sem${currentSemester}.csv"
+            )
+        }
 
         if (!overrideRollNo.isNullOrBlank()) {
             isOverrideStudent = true
@@ -65,14 +88,7 @@ class SemesterMark : AppCompatActivity() {
                 AppSession.EXTRA_OVERRIDE_INITIAL_SEMESTER,
                 maxSemester,
             ).coerceIn(1, maxSemester)
-            studentIdentityText.text = getString(
-                R.string.special_student_identity_format,
-                overrideName?.takeIf { it.isNotBlank() } ?: getString(R.string.common_not_available),
-                overrideRollNo,
-            )
-            studentIdentityText.visibility = View.VISIBLE
         } else {
-            val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
             rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
 
             if (rollNo.isNullOrBlank()) {
