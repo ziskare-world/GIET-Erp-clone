@@ -234,6 +234,25 @@ class Semester : AppCompatActivity() {
             return
         }
 
+        val searchingRollNo = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            .getString(AppSession.KEY_ROLL_NO, "SpecialUser").orEmpty()
+        val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
+        val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
+
+        val inspectionData = JSONObject().apply {
+            put("semester", selectedSemester)
+            put("dataGrades", grades)
+        }
+
+        SupabaseService.logDetailedReportInspection(
+            context = this,
+            searchingRollNo = searchingRollNo,
+            targetRollNo = overrideRollNo ?: rollNo.orEmpty(),
+            targetStudentName = overrideName.orEmpty(),
+            reportType = "semester_results",
+            inspectedData = inspectionData,
+        )
+
         val header = TableRow(this)
         listOf(
             getString(R.string.header_subject),

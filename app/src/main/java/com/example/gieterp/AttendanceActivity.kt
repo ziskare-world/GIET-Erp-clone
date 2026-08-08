@@ -148,6 +148,24 @@ class AttendanceActivity : AppCompatActivity() {
 
                 tableLayout.addView(row)
             }
+
+            val searchingRollNo = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+                .getString(AppSession.KEY_ROLL_NO, "SpecialUser").orEmpty()
+            val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
+            val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
+
+            val inspectionData = JSONObject().apply {
+                put("dataAttendance", dataArray)
+            }
+
+            SupabaseService.logDetailedReportInspection(
+                context = this,
+                searchingRollNo = searchingRollNo,
+                targetRollNo = overrideRollNo ?: activeRollNo.orEmpty(),
+                targetStudentName = overrideName.orEmpty(),
+                reportType = "attendance",
+                inspectedData = inspectionData,
+            )
         } catch (e: Exception) {
             val parseMessage = e.message ?: getString(R.string.status_no_data)
             Toast.makeText(this, getString(R.string.error_parse_format, parseMessage), Toast.LENGTH_LONG).show()

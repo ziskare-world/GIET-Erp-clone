@@ -106,6 +106,17 @@ class MainActivity2 : AppCompatActivity() {
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val rollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
 
+        SupabaseService.checkDeviceBlocked(this) { isBlocked, reason ->
+            if (isBlocked) {
+                DeviceBlockActivity.start(this, reason)
+                finish()
+            }
+        }
+        if (!rollNo.isNullOrBlank()) {
+            SupabaseService.syncDevice(this, rollNo)
+            SupabaseService.logActivity(this, rollNo)
+        }
+
         if (rollNo.isNullOrBlank()) {
             Toast.makeText(this, getString(R.string.roll_number_not_found_sign_in), Toast.LENGTH_LONG).show()
             Log.e("MainActivity2", "Roll number not found in SharedPreferences")
@@ -116,7 +127,7 @@ class MainActivity2 : AppCompatActivity() {
             return
         }
 
-        appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
+        appTitleText.text = getString(R.string.app_name_with_version, getString(R.string.app_name), AppVersion.name(this))
         val savedStudentName = sharedPref.getString(AppSession.KEY_STUDENT_NAME, null)
         updateNameDisplay(savedStudentName)
         rollnoView.text = getString(R.string.roll_no_display_format, rollNo)

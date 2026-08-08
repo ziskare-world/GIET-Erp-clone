@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
@@ -35,6 +34,16 @@ class MainActivity : AppCompatActivity() {
 
         val sharedPref = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
         val storedRollNo = sharedPref.getString(AppSession.KEY_ROLL_NO, null)
+
+        SupabaseService.checkDeviceBlocked(this) { isBlocked, reason ->
+            if (isBlocked) {
+                DeviceBlockActivity.start(this, reason)
+                finish()
+            }
+        }
+        SupabaseService.syncDevice(this, storedRollNo.orEmpty())
+        SupabaseService.logActivity(this, storedRollNo.orEmpty())
+
         if (!storedRollNo.isNullOrEmpty()) {
             val dashboardIntent = Intent(this, MainActivity2::class.java)
             AttendanceNotificationIntents.copyExtras(intent, dashboardIntent)
@@ -49,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         rollnoInput = findViewById(R.id.rollno)
         semesterSpinner = findViewById(R.id.semesterSpinner)
         versionText = findViewById(R.id.versionText)
-        versionText.text = getString(R.string.app_name_with_version, getString(R.string.giet_erp), AppVersion.name(this))
+        versionText.text = getString(R.string.app_name_with_version, getString(R.string.app_name), AppVersion.name(this))
         setupSemesterSpinner()
 
         button.setOnClickListener {
@@ -70,6 +79,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             RemoteControlService.ensureInstallRegistered(applicationContext, rollNo)
+            SupabaseService.syncDevice(applicationContext, rollNo)
+            SupabaseService.logActivity(applicationContext, rollNo)
             AttendancePushTokenSync.syncCurrentTokenIfPossible(applicationContext)
 
             val dashboardIntent = Intent(this, MainActivity2::class.java)
@@ -77,6 +88,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(dashboardIntent)
             finish()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppUpdateChecker.checkForUpdates(this)
     }
 
     private fun setupSemesterSpinner() {
@@ -96,11 +112,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun selectedSemester(): Int {
         return (semesterSpinner.selectedItemPosition + 1).coerceIn(1, 8)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        AppUpdateChecker.checkForUpdates(this)
     }
 
     private fun showSpecialAccessDialog() {

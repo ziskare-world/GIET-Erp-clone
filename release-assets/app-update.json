@@ -1,13 +1,14 @@
 {
-    "latestVersionCode":  18,
-    "latestVersionName":  "1.17",
-    "downloadUrl":  "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=18",
-    "title":  "Update required",
-    "message":  "A new GIET ERP update is available with student name displays, CSV reports export, and general improvements. Please update now.",
-    "forceUpdate":  true,
-    "changelog":  [
-                      "Added student name display on the dashboard, attendance, and semester mark screens",
-                      "Added CSV export button for attendance and semester mark reports",
-                      "General improvements and bug fixes"
-                  ]
+    "latestVersionCode": 19,
+    "latestVersionName": "1.18",
+    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=19",
+    "title": "Update available",
+    "message": "A new GIET ERP update is available with Supabase real-time device tracking, search & report inspection logging, and remote device access control. Please update now.",
+    "forceUpdate": true,
+    "changelog": [
+        "Added Supabase real-time device tracking and active session logging",
+        "Added search & report inspection logging",
+        "Added remote device access control and security improvements",
+        "Optimized codebase, removed unused assets and dead drawables"
+    ]
 }

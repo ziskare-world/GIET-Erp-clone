@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/TextAppearance.GietErp.HeroTitle"
-            android:text="@string/giet_erp"
+            android:text="@string/app_name"
             android:letterSpacing="0.02" />
 
         <TextView

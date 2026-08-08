@@ -139,6 +139,18 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
     }
 
     private fun openReportIfAllowed(target: Class<*>) {
+        val searchingRollNo = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            .getString(AppSession.KEY_ROLL_NO, "SpecialUser").orEmpty()
+
+        val detailsJson = org.json.JSONObject().apply {
+            put("searchingRollNo", searchingRollNo)
+            put("targetRollNo", student.rollNo)
+            put("targetStudentName", student.studentName)
+            put("reportType", target.simpleName)
+            put("selectedSemester", selectedSemester)
+        }
+        SupabaseService.logActivity(this, searchingRollNo, detailsJson)
+
         RemoteControlService.checkRollAccess(this, student.rollNo) { accessInfo ->
             if (!accessInfo.canViewDetails) {
                 restrictionText.text = accessInfo.message
@@ -149,6 +161,7 @@ class SpecialStudentDetailActivity : AppCompatActivity() {
             }
             setActionButtonsEnabled(true)
             restrictionText.visibility = View.GONE
+
             startActivity(reportIntent(target))
         }
     }

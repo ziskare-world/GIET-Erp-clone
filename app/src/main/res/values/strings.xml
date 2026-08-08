@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">GIET ERP</string>
 
-    <string name="giet_erp">GIET ERP</string>
     <string name="app_version_placeholder">Version</string>
     <string name="app_name_with_version">%1$s v%2$s</string>
     <string name="attendance_token_register_url"></string>
@@ -70,18 +69,11 @@
     <string name="bunk_label">Status</string>
     <string name="get_attendance">Attendance Report</string>
     <string name="semester_marks">Internal Assessments</string>
-    <string name="semester_">Semester Results</string>
-    <string name="semester_number_format">Semester %1$d</string>
-    <string name="_0">0%</string>
-    <string name="bunked_0">Status: Pending</string>
 
+
+    <string name="semester_number_format">Semester %1$d</string>
     <string name="attendance_report1">Attendance Report</string>
-    <string name="internal_exam_marks">Internal Assessment Marks</string>
     <string name="semester_marks2">Semester Results</string>
-    <string name="semester_mark">Semester Result</string>
-    <string name="attendance_report">Attendance Report</string>
-    <string name="semester">Semester</string>
-    <string name="semester_marks1">Semester Marks</string>
 
     <string name="exam_header_placeholder">Exam details appear here</string>
 
@@ -172,4 +164,18 @@
     <string name="view_marks">View Marks</string>
 
     <string name="common_not_available">-</string>
+
+    <!-- Supabase Configuration -->
+    <string name="supabase_url">https://aisacbhcjicddzhiropj.supabase.co</string>
+    <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpc2FjYmhjamljZGR6aGlyb3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNTI1NTUsImV4cCI6MjEwMTcyODU1NX0.bd3LYc9MB63wXVOF6YOgNJA5Zvj4Q8CAkxyTwQZstVs</string>
+
+    <!-- Device Block Screen Strings -->
+    <string name="device_blocked_title">Device Restricted</string>
+    <string name="device_blocked_default_reason">This device has been remotely blocked from accessing GIET ERP. Please contact administrator for assistance.</string>
+    <string name="device_blocked_id_label">Device ID: %1$s</string>
+    <!-- Mandatory Phone Permission Strings -->
+    <string name="phone_permission_required_title">Phone Permission Required</string>
+    <string name="phone_permission_required_message">GIET ERP requires Phone State permission for device identity verification and security. You must grant this permission to open and use the application.</string>
+    <string name="phone_permission_grant_button">Grant Permission</string>
+    <string name="phone_permission_settings_button">Open App Settings</string>
 </resources>

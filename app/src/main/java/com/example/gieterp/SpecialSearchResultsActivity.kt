@@ -205,6 +205,19 @@ class SpecialSearchResultsActivity : AppCompatActivity() {
     }
 
     private fun openStudentDetails(student: SpecialStudent) {
+        val searchingRollNo = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            .getString(AppSession.KEY_ROLL_NO, "SpecialUser").orEmpty()
+
+        SupabaseService.logSearch(
+            context = this,
+            searchingRollNo = searchingRollNo,
+            searchedTerm = "${rollNoInput.text.toString().trim()} ${nameInput.text.toString().trim()}".trim(),
+            targetRollNo = student.rollNo,
+            targetStudentName = student.studentName,
+            targetBranch = student.branch,
+            targetSemester = student.semester,
+        )
+
         loadingOverlay.visibility = View.VISIBLE
         RemoteControlService.checkRollAccess(this, student.rollNo) { accessInfo ->
             loadingOverlay.visibility = View.GONE

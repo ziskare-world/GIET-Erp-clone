@@ -14,7 +14,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         style="@style/TextAppearance.GietErp.ScreenTitle"
-        android:text="@string/internal_exam_marks"
+        android:text="@string/semester_marks"
         app:layout_constraintEnd_toStartOf="@id/buttonExport"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

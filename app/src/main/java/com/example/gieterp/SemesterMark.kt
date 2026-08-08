@@ -233,6 +233,25 @@ class SemesterMark : AppCompatActivity() {
             return
         }
 
+        val searchingRollNo = getSharedPreferences(AppSession.PREFERENCES_NAME, MODE_PRIVATE)
+            .getString(AppSession.KEY_ROLL_NO, "SpecialUser").orEmpty()
+        val overrideRollNo = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_ROLL_NO)
+        val overrideName = intent.getStringExtra(AppSession.EXTRA_OVERRIDE_STUDENT_NAME)
+
+        val inspectionData = JSONObject().apply {
+            put("semester", currentSemester)
+            put("dataInternalMarks", dataArray)
+        }
+
+        SupabaseService.logDetailedReportInspection(
+            context = this,
+            searchingRollNo = searchingRollNo,
+            targetRollNo = overrideRollNo ?: rollNo.orEmpty(),
+            targetStudentName = overrideName.orEmpty(),
+            reportType = "internal_marks",
+            inspectedData = inspectionData,
+        )
+
         val headerRow = TableRow(this)
         val headers = listOf(
             getString(R.string.header_exam_name),
