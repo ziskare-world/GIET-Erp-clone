@@ -493,7 +493,7 @@ object AppUpdateChecker {
                 )
                 session.commit(pendingIntent.intentSender)
             }
-        }.onFailure {
+        }.onFailure { primaryError ->
             runCatching {
                 val apkUri = androidx.core.content.FileProvider.getUriForFile(
                     activity,
@@ -505,10 +505,12 @@ object AppUpdateChecker {
                     flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 activity.startActivity(installIntent)
-            }.onFailure {
+            }.onFailure { fallbackError ->
                 clearPendingInstallVersion(activity)
                 renderReadyToInstallState(activity, state)
-                Toast.makeText(activity, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+                val reason = fallbackError.localizedMessage ?: primaryError.localizedMessage ?: "Unknown installation error"
+                state.statusView.text = "Install failed: $reason"
+                Toast.makeText(activity, "Update install failed: $reason", Toast.LENGTH_LONG).show()
             }
         }
     }
