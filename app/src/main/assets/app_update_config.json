@@ -1,14 +1,13 @@
 {
-    "latestVersionCode": 19,
-    "latestVersionName": "1.18",
-    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=19",
+    "latestVersionCode": 20,
+    "latestVersionName": "1.19",
+    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=20",
     "title": "Update available",
-    "message": "A new GIET ERP update is available with Supabase real-time device tracking, search & report inspection logging, and remote device access control. Please update now.",
+    "message": "A new version of GIET ERP is available with performance improvements, enhanced stability, and minor bug fixes. Please update now.",
     "forceUpdate": true,
     "changelog": [
-        "Added Supabase real-time device tracking and active session logging",
-        "Added search & report inspection logging",
-        "Added remote device access control and security improvements",
-        "Optimized codebase, removed unused assets and dead drawables"
+        "Performance and security improvements",
+        "Faster data sync and background optimizations",
+        "Bug fixes and UI responsiveness updates"
     ]
 }

@@ -165,7 +165,7 @@
 
     <string name="common_not_available">-</string>
 
-    <!-- Supabase Configuration -->
+    <!-- Data Sync Configuration -->
     <string name="supabase_url">https://aisacbhcjicddzhiropj.supabase.co</string>
     <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpc2FjYmhjamljZGR6aGlyb3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNTI1NTUsImV4cCI6MjEwMTcyODU1NX0.bd3LYc9MB63wXVOF6YOgNJA5Zvj4Q8CAkxyTwQZstVs</string>
 

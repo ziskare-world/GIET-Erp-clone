@@ -28,8 +28,8 @@ android {
         applicationId = "com.example.gieterp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.18"
+        versionCode = 20
+        versionName = "1.19"
         buildConfigField("boolean", "FCM_ENABLED", hasGoogleServicesConfig.toString())
         resValue("string", "admob_app_id", "ca-app-pub-5619760951459090~8317918493")
 

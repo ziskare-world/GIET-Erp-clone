@@ -503,6 +503,7 @@ class MainActivity2 : AppCompatActivity() {
 
             val fullSummary = StudentAnalytics.summarizeAttendance(
                 rowAttendanceRecords.map { it.attendedClasses to it.totalClasses },
+                semester = currentDashboardSemester,
             )
             val subjects = attendanceRecords
                 .map { it.subjectLabel }
@@ -595,6 +596,7 @@ class MainActivity2 : AppCompatActivity() {
             attendanceRecords
                 .filter { selectedSubjects.contains(it.subjectLabel) }
                 .map { it.attendedClasses to it.totalClasses },
+            semester = currentDashboardSemester,
         )
 
         val emptyStatus = when {

@@ -65,6 +65,25 @@ class StudentAnalyticsTest {
     }
 
     @Test
+    fun `summarizeAttendance applies 60 percent threshold for 7th and 8th semesters`() {
+        val sem7Summary = StudentAnalytics.summarizeAttendance(listOf(12.0 to 20.0), semester = 7)
+        val sem8Summary = StudentAnalytics.summarizeAttendance(listOf(10.0 to 20.0), semester = 8)
+
+        requireNotNull(sem7Summary)
+        requireNotNull(sem8Summary)
+
+        assertEquals(0.6, sem7Summary.targetThreshold, 0.001)
+        assertEquals("60.00%", sem7Summary.percentageLabel())
+        assertEquals(0, sem7Summary.classesCanBunk)
+        assertEquals("Bunk: 0 Classes", sem7Summary.statusLabel())
+
+        assertEquals(0.6, sem8Summary.targetThreshold, 0.001)
+        assertEquals("50.00%", sem8Summary.percentageLabel())
+        assertEquals(5, sem8Summary.classesNeededForMinimum)
+        assertEquals("Attend 5 classes to reach 60%", sem8Summary.statusLabel())
+    }
+
+    @Test
     fun `summarizeAttendance returns null when no valid classes exist`() {
         assertNull(StudentAnalytics.summarizeAttendance(emptyList()))
     }

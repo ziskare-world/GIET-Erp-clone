@@ -21,9 +21,10 @@ data class AttendanceRecord(
 data class AttendanceSummary(
     val attendedClasses: Double,
     val totalClasses: Double,
+    val targetThreshold: Double = ATTENDANCE_THRESHOLD,
 ) {
     private val thresholdTargetClasses: Double
-        get() = ATTENDANCE_THRESHOLD * totalClasses
+        get() = targetThreshold * totalClasses
 
     val percentage: Double
         get() = if (totalClasses == 0.0) 0.0 else (attendedClasses / totalClasses) * 100
@@ -35,7 +36,7 @@ data class AttendanceSummary(
         get() = if (!isAtOrAboveThreshold) {
             0
         } else {
-            floor((((attendedClasses / ATTENDANCE_THRESHOLD) - totalClasses) + FLOATING_POINT_EPSILON).coerceAtLeast(0.0)).toInt()
+            floor((((attendedClasses / targetThreshold) - totalClasses) + FLOATING_POINT_EPSILON).coerceAtLeast(0.0)).toInt()
         }
 
     val classesNeededForMinimum: Int
@@ -43,7 +44,7 @@ data class AttendanceSummary(
             0
         } else {
             ceil(
-                (((thresholdTargetClasses - attendedClasses) / (1 - ATTENDANCE_THRESHOLD)) - FLOATING_POINT_EPSILON)
+                (((thresholdTargetClasses - attendedClasses) / (1 - targetThreshold)) - FLOATING_POINT_EPSILON)
                     .coerceAtLeast(0.0)
             ).toInt()
         }
@@ -51,10 +52,11 @@ data class AttendanceSummary(
     fun percentageLabel(): String = String.format(Locale.US, "%.2f%%", percentage)
 
     fun statusLabel(): String {
+        val targetPercentInt = (targetThreshold * 100).toInt()
         return if (isAtOrAboveThreshold) {
             "Bunk: $classesCanBunk Classes"
         } else {
-            "Attend $classesNeededForMinimum classes to reach 80%"
+            "Attend $classesNeededForMinimum classes to reach ${targetPercentInt}%"
         }
     }
 }
@@ -71,6 +73,10 @@ object StudentAnalytics {
         val yearDiff = (currentYear - admissionYear).coerceAtLeast(0)
         val semester = yearDiff * 2 + if (currentMonth >= 7) 1 else 0
         return semester.coerceIn(MIN_SEMESTER, MAX_SEMESTER)
+    }
+
+    fun getRequiredAttendanceThreshold(semester: Int): Double {
+        return if (semester == 7 || semester == 8) 0.6 else 0.8
     }
 
     fun extractAttendanceCount(totalValue: String, attendedValue: String): Pair<Double, Double>? {
@@ -152,7 +158,10 @@ object StudentAnalytics {
         }
     }
 
-    fun summarizeAttendance(records: Iterable<Pair<Double, Double>>): AttendanceSummary? {
+    fun summarizeAttendance(
+        records: Iterable<Pair<Double, Double>>,
+        semester: Int = 1,
+    ): AttendanceSummary? {
         var totalAttended = 0.0
         var totalClasses = 0.0
 
@@ -163,8 +172,10 @@ object StudentAnalytics {
             }
         }
 
+        val targetThreshold = getRequiredAttendanceThreshold(semester)
+
         return if (totalClasses > 0) {
-            AttendanceSummary(totalAttended, totalClasses)
+            AttendanceSummary(totalAttended, totalClasses, targetThreshold)
         } else {
             null
         }
