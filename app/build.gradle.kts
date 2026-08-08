@@ -54,6 +54,8 @@ android {
         release {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = false
             resValue("string", "admob_banner_ad_unit_id", "ca-app-pub-5619760951459090/1399957246")

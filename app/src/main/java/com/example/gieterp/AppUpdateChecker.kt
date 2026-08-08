@@ -494,9 +494,22 @@ object AppUpdateChecker {
                 session.commit(pendingIntent.intentSender)
             }
         }.onFailure {
-            clearPendingInstallVersion(activity)
-            renderReadyToInstallState(activity, state)
-            Toast.makeText(activity, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+            runCatching {
+                val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                    activity,
+                    "${activity.packageName}.fileprovider",
+                    apkFile,
+                )
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                activity.startActivity(installIntent)
+            }.onFailure {
+                clearPendingInstallVersion(activity)
+                renderReadyToInstallState(activity, state)
+                Toast.makeText(activity, R.string.update_install_unavailable, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
