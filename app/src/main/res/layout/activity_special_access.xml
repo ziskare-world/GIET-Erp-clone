@@ -41,7 +41,7 @@
 
     <TextView
         android:id="@+id/specialTitleText"
-        style="@style/TextAppearance.GietErp.HeroTitle"
+        style="@style/TextAppearance.Erp.HeroTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -53,7 +53,7 @@
 
     <TextView
         android:id="@+id/specialDescriptionText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -64,7 +64,7 @@
 
     <TextView
         android:id="@+id/programFixedText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -82,7 +82,7 @@
 
     <TextView
         android:id="@+id/programIdFixedText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="6dp"
@@ -99,7 +99,7 @@
 
     <TextView
         android:id="@+id/branchLabelText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
@@ -124,7 +124,7 @@
 
     <TextView
         android:id="@+id/semesterLabelText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -163,7 +163,7 @@
 
     <TextView
         android:id="@+id/specialHintText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
@@ -189,7 +189,7 @@
         app:layout_constraintTop_toBottomOf="@id/specialHintText">
 
         <TextView
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"

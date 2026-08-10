@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.GietErp" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Erp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_secondary</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/accent_primary</item>
@@ -10,5 +10,5 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
-    <style name="Theme.GietErp" parent="Base.Theme.GietErp" />
+    <style name="Theme.Erp" parent="Base.Theme.Erp" />
 </resources>

@@ -15,7 +15,7 @@
 
     <TextView
         android:id="@+id/updateTitle"
-        style="@style/TextAppearance.GietErp.ScreenTitle"
+        style="@style/TextAppearance.Erp.ScreenTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -24,7 +24,7 @@
 
     <TextView
         android:id="@+id/updateMessage"
-        style="@style/TextAppearance.GietErp.BodyPrimary"
+        style="@style/TextAppearance.Erp.BodyPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -34,7 +34,7 @@
 
     <TextView
         android:id="@+id/updateStatusText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

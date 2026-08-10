@@ -246,7 +246,7 @@ class MainActivity2 : AppCompatActivity() {
             adsConsentManager.showPrivacyOptionsForm(this) {
                 updatePrivacyChoicesVisibility()
                 if (adsConsentManager.canRequestAds) {
-                    (application as GietErpApp).initializeAdsIfNeeded()
+                    (application as ErpApp).initializeAdsIfNeeded()
                     bannerController.loadBannerIfNeeded()
                 } else {
                     bannerController.showContainer(false)
@@ -257,7 +257,7 @@ class MainActivity2 : AppCompatActivity() {
         adsConsentManager.gatherConsent(this) {
             updatePrivacyChoicesVisibility()
             if (adsConsentManager.canRequestAds) {
-                (application as GietErpApp).initializeAdsIfNeeded()
+                (application as ErpApp).initializeAdsIfNeeded()
                 bannerController.loadBannerIfNeeded()
             } else {
                 bannerController.showContainer(false)

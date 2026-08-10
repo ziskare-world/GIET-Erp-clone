@@ -13,7 +13,7 @@
         android:id="@+id/titleText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        style="@style/TextAppearance.GietErp.ScreenTitle"
+        style="@style/TextAppearance.Erp.ScreenTitle"
         android:text="@string/semester_marks"
         app:layout_constraintEnd_toStartOf="@id/buttonExport"
         app:layout_constraintStart_toStartOf="parent"
@@ -34,7 +34,7 @@
 
     <TextView
         android:id="@+id/studentIdentityText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"

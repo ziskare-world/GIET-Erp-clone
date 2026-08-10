@@ -1,48 +1,48 @@
 <resources>
-    <style name="TextAppearance.GietErp" parent="" />
-    <style name="Widget.GietErp" parent="" />
+    <style name="TextAppearance.Erp" parent="" />
+    <style name="Widget.Erp" parent="" />
 
-    <style name="TextAppearance.GietErp.HeroTitle">
+    <style name="TextAppearance.Erp.HeroTitle">
         <item name="android:fontFamily">sans-serif-black</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">30sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="TextAppearance.GietErp.ScreenTitle">
+    <style name="TextAppearance.Erp.ScreenTitle">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">24sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="TextAppearance.GietErp.SectionTitle">
+    <style name="TextAppearance.Erp.SectionTitle">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">21sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="TextAppearance.GietErp.BodyPrimary">
+    <style name="TextAppearance.Erp.BodyPrimary">
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">15sp</item>
     </style>
 
-    <style name="TextAppearance.GietErp.BodySecondary">
+    <style name="TextAppearance.Erp.BodySecondary">
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="TextAppearance.GietErp.ButtonPrimary">
+    <style name="TextAppearance.Erp.ButtonPrimary">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="TextAppearance.GietErp.ButtonSecondary">
+    <style name="TextAppearance.Erp.ButtonSecondary">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">@color/accent_secondary</item>
         <item name="android:textSize">15sp</item>

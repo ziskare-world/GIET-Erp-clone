@@ -1,4 +1,4 @@
-# GIET-Erp-clone
+# ERP
 
 Android student ERP app clone with attendance, marks, special student search, and in-app update support.
 

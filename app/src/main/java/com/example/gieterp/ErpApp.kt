@@ -7,7 +7,7 @@ import androidx.work.WorkManager
 import com.google.android.gms.ads.MobileAds
 import java.util.concurrent.TimeUnit
 
-class GietErpApp : Application() {
+class ErpApp : Application() {
     companion object {
         private const val UPDATE_CHECK_WORK_NAME = "app_update_check"
     }

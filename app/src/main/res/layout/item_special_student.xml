@@ -16,7 +16,7 @@
 
     <TextView
         android:id="@+id/rollNoText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
@@ -24,41 +24,41 @@
 
     <TextView
         android:id="@+id/registrationNoText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/programBranchText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/semesterSectionText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/contactText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/hostelInfoText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp" />
 
     <TextView
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"

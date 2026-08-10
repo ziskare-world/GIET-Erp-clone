@@ -1,13 +1,13 @@
 {
-    "latestVersionCode": 22,
-    "latestVersionName": "1.21",
-    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/gieterp-release.apk?v=22",
+    "latestVersionCode": 23,
+    "latestVersionName": "1.22",
+    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/erp-release.apk?v=23",
     "title": "Update available",
-    "message": "A new version of GIET ERP is available with verified release packaging, reliable in-app installation, performance improvements, and bug fixes. Please update now.",
+    "message": "ERP has a new look with refreshed branding, a new launcher icon, and reliability improvements. Please update now.",
     "forceUpdate": true,
     "changelog": [
-        "Verified same-signature update compatibility",
-        "Improved in-app update installation reliability",
+        "Rebranded app name to ERP",
+        "New ERP launcher icon",
         "Performance and stability improvements"
     ]
 }

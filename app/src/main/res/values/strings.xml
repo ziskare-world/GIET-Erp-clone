@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GIET ERP</string>
+    <string name="app_name">ERP</string>
 
     <string name="app_version_placeholder">Version</string>
     <string name="app_name_with_version">%1$s v%2$s</string>
@@ -13,7 +13,7 @@
     <string name="privacy_choices">Privacy choices</string>
     <string name="app_control_metadata_url"></string>
     <string name="apps_script_web_app_url"></string>
-    <string name="app_control_block_title">GIET ERP is temporarily closed</string>
+    <string name="app_control_block_title">ERP is temporarily closed</string>
     <string name="app_control_default_message">The app is currently unavailable by admin control. Please try again later.</string>
     <string name="app_control_exit">Exit app</string>
     <string name="install_tracking_disclosure">This app records install activity, roll number usage, and device details for admin control and security.</string>
@@ -28,14 +28,14 @@
     <string name="todo">App Logo</string>
     <string name="update_metadata_url">https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/app-update.json</string>
     <string name="update_available_title">Update available</string>
-    <string name="update_available_message">A newer version of GIET ERP is available with performance improvements, bug fixes, and a more reliable experience.</string>
+    <string name="update_available_message">A newer version of ERP is available with performance improvements, bug fixes, and a more reliable experience.</string>
     <string name="update_version_summary">Current: %1$s | Latest: %2$s</string>
     <string name="update_whats_new">What is new</string>
     <string name="update_action_now">Update now</string>
     <string name="update_action_later">Later</string>
     <string name="update_link_unavailable">The update link is not available right now.</string>
     <string name="update_download_title">Downloading update</string>
-    <string name="update_download_message">Preparing the latest version of GIET ERP.</string>
+    <string name="update_download_message">Preparing the latest version of ERP.</string>
     <string name="update_download_started">Update download started.</string>
     <string name="update_download_failed">The update download could not be completed.</string>
     <string name="update_allow_install_permission">Allow installation from this app, then tap Update now again.</string>
@@ -171,11 +171,11 @@
 
     <!-- Device Block Screen Strings -->
     <string name="device_blocked_title">Device Restricted</string>
-    <string name="device_blocked_default_reason">This device has been remotely blocked from accessing GIET ERP. Please contact administrator for assistance.</string>
+    <string name="device_blocked_default_reason">This device has been remotely blocked from accessing ERP. Please contact administrator for assistance.</string>
     <string name="device_blocked_id_label">Device ID: %1$s</string>
     <!-- Mandatory Phone Permission Strings -->
     <string name="phone_permission_required_title">Phone Permission Required</string>
-    <string name="phone_permission_required_message">GIET ERP requires Phone State permission for device identity verification and security. You must grant this permission to open and use the application.</string>
+    <string name="phone_permission_required_message">ERP requires Phone State permission for device identity verification and security. You must grant this permission to open and use the application.</string>
     <string name="phone_permission_grant_button">Grant Permission</string>
     <string name="phone_permission_settings_button">Open App Settings</string>
 </resources>

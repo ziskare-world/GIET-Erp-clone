@@ -28,7 +28,7 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/TextAppearance.GietErp.HeroTitle"
+            style="@style/TextAppearance.Erp.HeroTitle"
             android:text="@string/app_name"
             android:letterSpacing="0.02" />
 
@@ -37,14 +37,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:text="@string/app_version_placeholder" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:text="@string/welcome_subtitle"
             android:textAlignment="center" />
 
@@ -74,7 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:text="@string/select_semester" />
 
         <Spinner
@@ -103,7 +103,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                style="@style/TextAppearance.GietErp.ButtonPrimary"
+                style="@style/TextAppearance.Erp.ButtonPrimary"
                 android:text="@string/submit"
                 android:textAllCaps="true"
                 android:letterSpacing="0.03" />

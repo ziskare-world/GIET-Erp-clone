@@ -41,7 +41,7 @@
 
     <TextView
         android:id="@+id/resultsTitleText"
-        style="@style/TextAppearance.GietErp.HeroTitle"
+        style="@style/TextAppearance.Erp.HeroTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -64,7 +64,7 @@
 
         <TextView
             android:id="@+id/branchSummaryText"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="6dp"
@@ -78,7 +78,7 @@
 
         <TextView
             android:id="@+id/semesterSummaryText"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
@@ -123,7 +123,7 @@
 
     <TextView
         android:id="@+id/resultsCountText"
-        style="@style/TextAppearance.GietErp.BodySecondary"
+        style="@style/TextAppearance.Erp.BodySecondary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -159,7 +159,7 @@
 
         <TextView
             android:id="@+id/emptyStateText"
-            style="@style/TextAppearance.GietErp.BodySecondary"
+            style="@style/TextAppearance.Erp.BodySecondary"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
@@ -196,7 +196,7 @@
                     app:trackThickness="4dp" />
 
                 <TextView
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"

@@ -41,7 +41,7 @@
 
     <TextView
         android:id="@+id/detailTitleText"
-        style="@style/TextAppearance.GietErp.HeroTitle"
+        style="@style/TextAppearance.Erp.HeroTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -74,7 +74,7 @@
                 android:padding="16dp">
 
                 <TextView
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/special_profile_title"
@@ -83,7 +83,7 @@
 
                 <TextView
                     android:id="@+id/studentNameText"
-                    style="@style/TextAppearance.GietErp.ScreenTitle"
+                    style="@style/TextAppearance.Erp.ScreenTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -91,7 +91,7 @@
 
                 <TextView
                     android:id="@+id/rollNoText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -99,7 +99,7 @@
 
                 <TextView
                     android:id="@+id/registrationNoText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -107,23 +107,23 @@
 
                 <TextView
                     android:id="@+id/programBranchText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    tools:text="Program: BTech • Branch: CSE" />
+                    tools:text="Program: BTech â€¢ Branch: CSE" />
 
                 <TextView
                     android:id="@+id/semesterSectionText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    tools:text="Semester: 6 • Section: A" />
+                    tools:text="Semester: 6 â€¢ Section: A" />
 
                 <TextView
                     android:id="@+id/contactText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -131,7 +131,7 @@
 
                 <TextView
                     android:id="@+id/hostelInfoText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -147,7 +147,7 @@
                 android:padding="16dp">
 
                 <TextView
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/special_academic_actions_title"
@@ -155,7 +155,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -164,7 +164,7 @@
 
                 <TextView
                     android:id="@+id/restrictionText"
-                    style="@style/TextAppearance.GietErp.BodySecondary"
+                    style="@style/TextAppearance.Erp.BodySecondary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
