@@ -1,13 +1,13 @@
 {
-    "latestVersionCode": 23,
-    "latestVersionName": "1.22",
-    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/erp-release.apk?v=23",
+    "latestVersionCode": 24,
+    "latestVersionName": "1.23",
+    "downloadUrl": "https://raw.githubusercontent.com/ziskare-world/GIET-Erp-clone/main/release-assets/erp-release.apk?v=24",
     "title": "Update available",
-    "message": "ERP has a new look with refreshed branding, a new launcher icon, and reliability improvements. Please update now.",
+    "message": "This ERP update fixes the startup issue introduced in the previous release. Please update now.",
     "forceUpdate": true,
     "changelog": [
-        "Rebranded app name to ERP",
-        "New ERP launcher icon",
-        "Performance and security improvements"
+        "Fixed app closing immediately after launch",
+        "Restored correct application startup configuration",
+        "ERP branding and launcher icon retained"
     ]
 }
