@@ -1,0 +1,1 @@
+{"name":"GIET Attendance Proxy","image":"mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm","forwardPorts":[3000],"portsAttributes":{"3000":{"label":"GIET attendance API","onAutoForward":"notify","visibility":"private"}},"postStartCommand":"bash attendance-proxy/start.sh"}
